@@ -1,0 +1,20 @@
+name: Bug
+description: Something does not work as described in the contract or the task packs
+labels: [bug]
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options: [Game / engine (M1), Mini-games (M1), Backend / Brain Twin (M2), Coach (M3), Dashboard / app (M3), Docs]
+    validations: { required: true }
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+    validations: { required: true }
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: "1. Post shared/fixtures/events-round.json\n2. GET /api/profile/{id}\n3. ..."

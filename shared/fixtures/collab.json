@@ -1,0 +1,32 @@
+{
+  "total": 64.5,
+  "components": {
+    "clarification": {
+      "score": 55,
+      "n": 11
+    },
+    "verification": {
+      "score": 72,
+      "n": 11
+    },
+    "iteration": {
+      "score": 60,
+      "n": 5
+    },
+    "autonomy": {
+      "score": 78,
+      "n": 180
+    },
+    "responsible_use": {
+      "score": 52,
+      "n": 11
+    }
+  },
+  "weights": {
+    "clarification": 0.2,
+    "verification": 0.25,
+    "iteration": 0.2,
+    "autonomy": 0.2,
+    "responsible_use": 0.15
+  }
+}

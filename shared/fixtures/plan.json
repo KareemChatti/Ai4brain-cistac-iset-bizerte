@@ -1,0 +1,26 @@
+{
+  "focus": "reasoning",
+  "reason": "Reasoning has the lowest score (61) and its range is still wide.",
+  "opponent_level": 3,
+  "quick_mode": true,
+  "steps": [
+    {
+      "kind": "minigame",
+      "game": "rami_puzzle",
+      "level": 4
+    },
+    {
+      "kind": "rami"
+    },
+    {
+      "kind": "minigame",
+      "game": "card_recall",
+      "level": 5
+    },
+    {
+      "kind": "minigame",
+      "game": "rami_puzzle",
+      "level": 4
+    }
+  ]
+}

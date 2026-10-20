@@ -1,0 +1,63 @@
+{
+  "round_id": "33333333-3333-4333-8333-333333333333",
+  "headline": "Strong opening, but three quick discards at the end cost you the round.",
+  "key_moments": [
+    {
+      "turn_no": 7,
+      "title": "You fed your opponent's run",
+      "explanation": "The opponent had just picked up 7H, so your 8H completed their hearts run.",
+      "tip": "Before discarding, glance at what your opponent took from the discard pile in the last two turns.",
+      "fact_ids": [
+        "F1"
+      ]
+    },
+    {
+      "turn_no": 9,
+      "title": "A free lay-off left in your hand",
+      "explanation": "Your 5S fitted the spades run already on the table. Keeping it added 5 penalty points at the end.",
+      "tip": "After you open, scan the table melds once every turn before you discard.",
+      "fact_ids": [
+        "F2"
+      ]
+    },
+    {
+      "turn_no": 12,
+      "title": "Rushing at the end",
+      "explanation": "Your last three discards each took under 1.5 seconds and were weaker than your usual choices.",
+      "tip": "When you are close to going out, take one extra breath before each discard.",
+      "fact_ids": [
+        "F4",
+        "F3"
+      ]
+    }
+  ],
+  "strengths": [
+    {
+      "text": "You opened early with a clean 74-point lay-down.",
+      "fact_ids": [
+        "F5"
+      ]
+    },
+    {
+      "text": "You changed plans quickly when the 6C you needed was taken.",
+      "fact_ids": [
+        "F6"
+      ]
+    },
+    {
+      "text": "You checked a low-confidence hint and correctly ignored it.",
+      "fact_ids": [
+        "F7"
+      ]
+    }
+  ],
+  "next_focus": {
+    "dimension": "attention",
+    "text": "Next session starts with two Meld Spotter rounds to practise spotting lay-offs.",
+    "fact_ids": [
+      "F2"
+    ]
+  },
+  "voice_text": "Nice opening this round. Three things to look at: your eight of hearts fed your opponent's run, your five of spades could have gone on the table, and the last three discards were rushed. Next time, take a breath before each discard near the end.",
+  "source": "llm"
+}

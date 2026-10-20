@@ -1,0 +1,78 @@
+{
+  "round_id": "33333333-3333-4333-8333-333333333333",
+  "user_id": "11111111-1111-4111-8111-111111111111",
+  "result": "loss",
+  "facts": [
+    {
+      "id": "F1",
+      "dimension": "memory",
+      "kind": "fed_opponent",
+      "turn_no": 7,
+      "text": "Turn 7: you discarded 8H. Two turns earlier the opponent had picked up 7H, and they used your 8H to lay down 6H-7H-8H.",
+      "value": null
+    },
+    {
+      "id": "F2",
+      "dimension": "attention",
+      "kind": "missed_lay_off",
+      "turn_no": 9,
+      "text": "Turn 9: your 5S could have been added to the 2S-3S-4S run on the table. You kept it instead.",
+      "value": 1
+    },
+    {
+      "id": "F3",
+      "dimension": "reasoning",
+      "kind": "low_quality_discard",
+      "turn_no": 11,
+      "text": "Turn 11: discarding QD left you about 4.1 turns from going out; discarding 9C would have left 3.2.",
+      "value": 0.42
+    },
+    {
+      "id": "F4",
+      "dimension": "speed",
+      "kind": "fast_and_wrong",
+      "turn_no": 12,
+      "text": "Turns 12-14: three discards in under 1.5 seconds each, and all three were below your usual quality.",
+      "value": 3
+    },
+    {
+      "id": "F5",
+      "dimension": "reasoning",
+      "kind": "good_opening",
+      "turn_no": 5,
+      "text": "Turn 5: you opened with 74 points using a clean run and a set, the earliest opening in your last 5 rounds.",
+      "value": 74
+    },
+    {
+      "id": "F6",
+      "dimension": "flexibility",
+      "kind": "plan_switch",
+      "turn_no": 10,
+      "text": "Turn 10: after the opponent took the 6C you were waiting for, you switched from the clubs run to a set of 9s within one turn.",
+      "value": 1
+    },
+    {
+      "id": "F7",
+      "dimension": "general",
+      "kind": "hint_rejected_bad",
+      "turn_no": 8,
+      "text": "Turn 8: you checked the coach's hint (55% confidence), ignored it, and your own move was better.",
+      "value": null
+    }
+  ],
+  "stats": {
+    "turns": 16,
+    "avg_quality": 0.68,
+    "median_think_ms": 4200,
+    "missed_lay_offs": 2,
+    "hints_used": 3,
+    "user_penalty": 23,
+    "ai_penalty": 0
+  },
+  "profile_delta": {
+    "reasoning": 1.5,
+    "attention": -0.8,
+    "memory": -0.5,
+    "flexibility": 1.2
+  }
+}

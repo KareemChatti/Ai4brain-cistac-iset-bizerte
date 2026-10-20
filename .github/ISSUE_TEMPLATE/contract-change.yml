@@ -1,0 +1,19 @@
+name: Contract change
+description: Propose a change to docs/contracts.md or shared/ (needs one teammate's ok)
+labels: [contract]
+body:
+  - type: textarea
+    id: change
+    attributes:
+      label: Proposed change
+      description: Which endpoint, event or shape, and the exact new form.
+    validations: { required: true }
+  - type: textarea
+    id: why
+    attributes:
+      label: Why
+    validations: { required: true }
+  - type: textarea
+    id: impact
+    attributes:
+      label: Who is affected (M1 / M2 / M3) and what they must update

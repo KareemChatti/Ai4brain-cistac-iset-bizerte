@@ -1,0 +1,15 @@
+name: Task
+description: A unit of work from a task pack
+labels: [task]
+body:
+  - type: input
+    id: ref
+    attributes:
+      label: Task reference
+      placeholder: "Task 2.2, docs/team/member-2-twin.md"
+    validations: { required: true }
+  - type: textarea
+    id: done
+    attributes:
+      label: Done when
+    validations: { required: true }

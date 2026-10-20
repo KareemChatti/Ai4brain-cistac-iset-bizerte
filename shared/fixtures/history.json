@@ -1,0 +1,576 @@
+[
+  {
+    "ts": "2026-10-06T18:00:00Z",
+    "trigger": "minigame",
+    "dimensions": {
+      "memory": {
+        "score": 53.8,
+        "low": 29.8,
+        "high": 77.8,
+        "n_obs": 3,
+        "trend": 7.0
+      },
+      "attention": {
+        "score": 59.6,
+        "low": 35.6,
+        "high": 83.6,
+        "n_obs": 3,
+        "trend": 4.2
+      },
+      "speed": {
+        "score": 64.2,
+        "low": 40.2,
+        "high": 88.2,
+        "n_obs": 3,
+        "trend": 2.1
+      },
+      "reasoning": {
+        "score": 46.3,
+        "low": 22.3,
+        "high": 70.3,
+        "n_obs": 3,
+        "trend": 8.4
+      },
+      "flexibility": {
+        "score": 53.4,
+        "low": 29.4,
+        "high": 77.4,
+        "n_obs": 3,
+        "trend": 4.9
+      }
+    }
+  },
+  {
+    "ts": "2026-10-07T09:00:00Z",
+    "trigger": "round",
+    "dimensions": {
+      "memory": {
+        "score": 54.6,
+        "low": 32.0,
+        "high": 77.2,
+        "n_obs": 7,
+        "trend": 7.0
+      },
+      "attention": {
+        "score": 59.5,
+        "low": 36.9,
+        "high": 82.1,
+        "n_obs": 7,
+        "trend": 4.2
+      },
+      "speed": {
+        "score": 64.6,
+        "low": 42.0,
+        "high": 87.2,
+        "n_obs": 7,
+        "trend": 2.1
+      },
+      "reasoning": {
+        "score": 45.9,
+        "low": 23.3,
+        "high": 68.5,
+        "n_obs": 7,
+        "trend": 8.4
+      },
+      "flexibility": {
+        "score": 54.7,
+        "low": 32.1,
+        "high": 77.3,
+        "n_obs": 7,
+        "trend": 4.9
+      }
+    }
+  },
+  {
+    "ts": "2026-10-08T20:00:00Z",
+    "trigger": "minigame",
+    "dimensions": {
+      "memory": {
+        "score": 52.2,
+        "low": 31.0,
+        "high": 73.4,
+        "n_obs": 11,
+        "trend": 7.0
+      },
+      "attention": {
+        "score": 61.5,
+        "low": 40.3,
+        "high": 82.7,
+        "n_obs": 11,
+        "trend": 4.2
+      },
+      "speed": {
+        "score": 68.4,
+        "low": 47.2,
+        "high": 89.6,
+        "n_obs": 11,
+        "trend": 2.1
+      },
+      "reasoning": {
+        "score": 47.9,
+        "low": 26.7,
+        "high": 69.1,
+        "n_obs": 11,
+        "trend": 8.4
+      },
+      "flexibility": {
+        "score": 56.7,
+        "low": 35.5,
+        "high": 77.9,
+        "n_obs": 11,
+        "trend": 4.9
+      }
+    }
+  },
+  {
+    "ts": "2026-10-09T09:00:00Z",
+    "trigger": "round",
+    "dimensions": {
+      "memory": {
+        "score": 55.3,
+        "low": 35.5,
+        "high": 75.1,
+        "n_obs": 15,
+        "trend": 7.0
+      },
+      "attention": {
+        "score": 61.4,
+        "low": 41.6,
+        "high": 81.2,
+        "n_obs": 15,
+        "trend": 4.2
+      },
+      "speed": {
+        "score": 68.8,
+        "low": 49.0,
+        "high": 88.6,
+        "n_obs": 15,
+        "trend": 2.1
+      },
+      "reasoning": {
+        "score": 46.8,
+        "low": 27.0,
+        "high": 66.6,
+        "n_obs": 15,
+        "trend": 8.4
+      },
+      "flexibility": {
+        "score": 58.5,
+        "low": 38.7,
+        "high": 78.3,
+        "n_obs": 15,
+        "trend": 4.9
+      }
+    }
+  },
+  {
+    "ts": "2026-10-10T18:00:00Z",
+    "trigger": "minigame",
+    "dimensions": {
+      "memory": {
+        "score": 55.7,
+        "low": 37.3,
+        "high": 74.1,
+        "n_obs": 19,
+        "trend": 7.0
+      },
+      "attention": {
+        "score": 62.6,
+        "low": 44.2,
+        "high": 81.0,
+        "n_obs": 19,
+        "trend": 4.2
+      },
+      "speed": {
+        "score": 67.5,
+        "low": 49.1,
+        "high": 85.9,
+        "n_obs": 19,
+        "trend": 2.1
+      },
+      "reasoning": {
+        "score": 50.0,
+        "low": 31.6,
+        "high": 68.4,
+        "n_obs": 19,
+        "trend": 8.4
+      },
+      "flexibility": {
+        "score": 58.5,
+        "low": 40.1,
+        "high": 76.9,
+        "n_obs": 19,
+        "trend": 4.9
+      }
+    }
+  },
+  {
+    "ts": "2026-10-11T09:00:00Z",
+    "trigger": "round",
+    "dimensions": {
+      "memory": {
+        "score": 57.3,
+        "low": 40.3,
+        "high": 74.3,
+        "n_obs": 23,
+        "trend": 7.0
+      },
+      "attention": {
+        "score": 63.6,
+        "low": 46.6,
+        "high": 80.6,
+        "n_obs": 23,
+        "trend": 4.2
+      },
+      "speed": {
+        "score": 67.0,
+        "low": 50.0,
+        "high": 84.0,
+        "n_obs": 23,
+        "trend": 2.1
+      },
+      "reasoning": {
+        "score": 51.2,
+        "low": 34.2,
+        "high": 68.2,
+        "n_obs": 23,
+        "trend": 8.4
+      },
+      "flexibility": {
+        "score": 56.8,
+        "low": 39.8,
+        "high": 73.8,
+        "n_obs": 23,
+        "trend": 4.9
+      }
+    }
+  },
+  {
+    "ts": "2026-10-12T09:00:00Z",
+    "trigger": "minigame",
+    "dimensions": {
+      "memory": {
+        "score": 58.5,
+        "low": 42.9,
+        "high": 74.1,
+        "n_obs": 27,
+        "trend": 7.0
+      },
+      "attention": {
+        "score": 63.6,
+        "low": 48.0,
+        "high": 79.2,
+        "n_obs": 27,
+        "trend": 4.2
+      },
+      "speed": {
+        "score": 67.9,
+        "low": 52.3,
+        "high": 83.5,
+        "n_obs": 27,
+        "trend": 2.1
+      },
+      "reasoning": {
+        "score": 53.3,
+        "low": 37.7,
+        "high": 68.9,
+        "n_obs": 27,
+        "trend": 8.4
+      },
+      "flexibility": {
+        "score": 59.1,
+        "low": 43.5,
+        "high": 74.7,
+        "n_obs": 27,
+        "trend": 4.9
+      }
+    }
+  },
+  {
+    "ts": "2026-10-13T20:00:00Z",
+    "trigger": "round",
+    "dimensions": {
+      "memory": {
+        "score": 58.4,
+        "low": 44.2,
+        "high": 72.6,
+        "n_obs": 31,
+        "trend": 7.0
+      },
+      "attention": {
+        "score": 63.2,
+        "low": 49.0,
+        "high": 77.4,
+        "n_obs": 31,
+        "trend": 4.2
+      },
+      "speed": {
+        "score": 66.8,
+        "low": 52.6,
+        "high": 81.0,
+        "n_obs": 31,
+        "trend": 2.1
+      },
+      "reasoning": {
+        "score": 54.5,
+        "low": 40.3,
+        "high": 68.7,
+        "n_obs": 31,
+        "trend": 8.4
+      },
+      "flexibility": {
+        "score": 58.2,
+        "low": 44.0,
+        "high": 72.4,
+        "n_obs": 31,
+        "trend": 4.9
+      }
+    }
+  },
+  {
+    "ts": "2026-10-14T18:00:00Z",
+    "trigger": "minigame",
+    "dimensions": {
+      "memory": {
+        "score": 60.1,
+        "low": 47.3,
+        "high": 72.9,
+        "n_obs": 35,
+        "trend": 7.0
+      },
+      "attention": {
+        "score": 66.3,
+        "low": 53.5,
+        "high": 79.1,
+        "n_obs": 35,
+        "trend": 4.2
+      },
+      "speed": {
+        "score": 69.3,
+        "low": 56.5,
+        "high": 82.1,
+        "n_obs": 35,
+        "trend": 2.1
+      },
+      "reasoning": {
+        "score": 53.8,
+        "low": 41.0,
+        "high": 66.6,
+        "n_obs": 35,
+        "trend": 8.4
+      },
+      "flexibility": {
+        "score": 62.5,
+        "low": 49.7,
+        "high": 75.3,
+        "n_obs": 35,
+        "trend": 4.9
+      }
+    }
+  },
+  {
+    "ts": "2026-10-15T09:00:00Z",
+    "trigger": "round",
+    "dimensions": {
+      "memory": {
+        "score": 61.0,
+        "low": 49.6,
+        "high": 72.4,
+        "n_obs": 39,
+        "trend": 7.0
+      },
+      "attention": {
+        "score": 64.1,
+        "low": 52.7,
+        "high": 75.5,
+        "n_obs": 39,
+        "trend": 4.2
+      },
+      "speed": {
+        "score": 68.1,
+        "low": 56.7,
+        "high": 79.5,
+        "n_obs": 39,
+        "trend": 2.1
+      },
+      "reasoning": {
+        "score": 57.5,
+        "low": 46.1,
+        "high": 68.9,
+        "n_obs": 39,
+        "trend": 8.4
+      },
+      "flexibility": {
+        "score": 61.0,
+        "low": 49.6,
+        "high": 72.4,
+        "n_obs": 39,
+        "trend": 4.9
+      }
+    }
+  },
+  {
+    "ts": "2026-10-16T09:00:00Z",
+    "trigger": "minigame",
+    "dimensions": {
+      "memory": {
+        "score": 63.1,
+        "low": 53.1,
+        "high": 73.1,
+        "n_obs": 43,
+        "trend": 7.0
+      },
+      "attention": {
+        "score": 66.3,
+        "low": 56.3,
+        "high": 76.3,
+        "n_obs": 43,
+        "trend": 4.2
+      },
+      "speed": {
+        "score": 70.5,
+        "low": 60.5,
+        "high": 80.5,
+        "n_obs": 43,
+        "trend": 2.1
+      },
+      "reasoning": {
+        "score": 56.3,
+        "low": 46.3,
+        "high": 66.3,
+        "n_obs": 43,
+        "trend": 8.4
+      },
+      "flexibility": {
+        "score": 62.8,
+        "low": 52.8,
+        "high": 72.8,
+        "n_obs": 43,
+        "trend": 4.9
+      }
+    }
+  },
+  {
+    "ts": "2026-10-17T20:00:00Z",
+    "trigger": "round",
+    "dimensions": {
+      "memory": {
+        "score": 63.3,
+        "low": 54.7,
+        "high": 71.9,
+        "n_obs": 47,
+        "trend": 7.0
+      },
+      "attention": {
+        "score": 66.4,
+        "low": 57.8,
+        "high": 75.0,
+        "n_obs": 47,
+        "trend": 4.2
+      },
+      "speed": {
+        "score": 70.7,
+        "low": 62.1,
+        "high": 79.3,
+        "n_obs": 47,
+        "trend": 2.1
+      },
+      "reasoning": {
+        "score": 60.0,
+        "low": 51.4,
+        "high": 68.6,
+        "n_obs": 47,
+        "trend": 8.4
+      },
+      "flexibility": {
+        "score": 62.6,
+        "low": 54.0,
+        "high": 71.2,
+        "n_obs": 47,
+        "trend": 4.9
+      }
+    }
+  },
+  {
+    "ts": "2026-10-18T09:00:00Z",
+    "trigger": "minigame",
+    "dimensions": {
+      "memory": {
+        "score": 62.2,
+        "low": 55.0,
+        "high": 69.4,
+        "n_obs": 51,
+        "trend": 7.0
+      },
+      "attention": {
+        "score": 68.0,
+        "low": 60.8,
+        "high": 75.2,
+        "n_obs": 51,
+        "trend": 4.2
+      },
+      "speed": {
+        "score": 70.2,
+        "low": 63.0,
+        "high": 77.4,
+        "n_obs": 51,
+        "trend": 2.1
+      },
+      "reasoning": {
+        "score": 61.4,
+        "low": 54.2,
+        "high": 68.6,
+        "n_obs": 51,
+        "trend": 8.4
+      },
+      "flexibility": {
+        "score": 64.7,
+        "low": 57.5,
+        "high": 71.9,
+        "n_obs": 51,
+        "trend": 4.9
+      }
+    }
+  },
+  {
+    "ts": "2026-10-19T18:00:00Z",
+    "trigger": "round",
+    "dimensions": {
+      "memory": {
+        "score": 65.9,
+        "low": 60.1,
+        "high": 71.7,
+        "n_obs": 55,
+        "trend": 7.0
+      },
+      "attention": {
+        "score": 69.3,
+        "low": 63.5,
+        "high": 75.1,
+        "n_obs": 55,
+        "trend": 4.2
+      },
+      "speed": {
+        "score": 69.3,
+        "low": 63.5,
+        "high": 75.1,
+        "n_obs": 55,
+        "trend": 2.1
+      },
+      "reasoning": {
+        "score": 62.4,
+        "low": 56.6,
+        "high": 68.2,
+        "n_obs": 55,
+        "trend": 8.4
+      },
+      "flexibility": {
+        "score": 63.5,
+        "low": 57.7,
+        "high": 69.3,
+        "n_obs": 55,
+        "trend": 4.9
+      }
+    }
+  }
+]
