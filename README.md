@@ -173,31 +173,6 @@ ai4brain-rami/
 
 Details: [`docs/data-and-ethics.md`](docs/data-and-ethics.md) *(planned)*.
 
-## Roadmap
-
-| Date | Milestone |
-|---|---|
-| Oct 20 | Repo, app shell, backend skeleton |
-| Oct 24 | Engine, playable round, scoring with uncertainty, coach on fixtures |
-| **Oct 25** | **Integration 1**: a real round produces a real profile and review |
-| Oct 28 | Mini-games, grader, plan, collab score, dashboard, onboarding |
-| **Oct 29** | **Feature freeze**: full flow on the deployed version |
-| **Nov 1** | **Phase 1 submission**: repo, demo video, slides |
-| Nov 7 | Phase 2 pitch |
-
-Bonus (Layer D) ideas: voice coaching, projection of growth with uncertainty.
-
-## Team
-
-| Role | Area |
-|---|---|
-| Member 1 | Game engine, AI opponent, turn grader, game table, mini-games |
-| Member 2 | Backend, scoring with uncertainty, Brain Twin, adaptive plan, AI Collaboration Score, data and ethics |
-| Member 3 | App shell, AI coach, hint panel, dashboard, onboarding, report, video |
-| Member 4 | *to be confirmed* |
-
-How we work together: [`CONTRIBUTING.md`](CONTRIBUTING.md).
-
 ## Documentation
 
 | Document | Content |
