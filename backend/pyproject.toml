@@ -1,0 +1,10 @@
+[project]
+name = "ai4brain-rami-backend"
+version = "0.1.0"
+description = "API, data and Brain Twin for AI4Brain × Rami"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+addopts = "-ra"
