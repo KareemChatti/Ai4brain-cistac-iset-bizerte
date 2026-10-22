@@ -69,12 +69,13 @@ backend/
 │   ├── main.py         app, CORS, beacon support, routers, guarded coach import
 │   ├── config.py       settings from the environment
 │   ├── db.py           engine, sessions (get_session for routes, session_scope for plain functions)
-│   ├── models.py       tables: users, events, snapshots, goals, deleted_users
+│   ├── models.py       tables: users, events, observations, snapshots, goals, deleted_users
 │   ├── schemas.py      request/response shapes from docs/contracts.md
 │   ├── privacy.py      nickname check, user-id hashing
 │   ├── timeutil.py     UTC helpers, ISO "Z" formatting
-│   ├── routers/        users, events, data  (profile, plan, collab... coming)
-│   ├── scoring/        pipeline (observations, twin, projection, adaptive, collab, frustration coming)
+│   ├── routers/        users, events, profile, data  (plan, collab... coming)
+│   ├── scoring/        observations (events -> 0-100), twin (Kalman belief), pipeline, profile
+│   │                   (projection, adaptive, collab, frustration coming)
 │   └── coach/          Member 3
 └── tests/
 ```
@@ -84,4 +85,11 @@ backend/
 - Include your router as `app/coach/router.py` exporting `router`. `main.py` imports it inside a `try`, so the server still starts if it is missing or broken.
 - Open your own session with `from app.db import session_scope`.
 - Give your cached-review table a `user_id` column and export/delete will include it with no change on my side.
-- Coming in tasks 2.2 and 2.6: `get_profile(user_id)`, `recent_round_ids(user_id, n=3)` and `build_evidence(user_id, round_id)`.
+- Ready: `from app.scoring.profile import get_profile, recent_round_ids`
+  - `get_profile(user_id) -> Profile` (Pydantic model, same shape as `GET /api/profile/{id}`)
+  - `recent_round_ids(user_id, n=3) -> list[str]`, newest first
+- Coming in task 2.6: `build_evidence(user_id, round_id)`.
+
+## How scoring works
+
+Every batch of events re-scores the rounds and mini-game sessions it touches into 0–100 observations, then replays the Brain Twin (one Kalman belief per skill) and rewrites the snapshot history. Formulas, parameters and limitations: [`docs/scoring.md`](../docs/scoring.md).

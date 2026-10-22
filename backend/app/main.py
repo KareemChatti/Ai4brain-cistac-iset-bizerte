@@ -10,7 +10,7 @@ from starlette.types import ASGIApp, Receive, Scope, Send
 
 from app import __version__, db
 from app.config import settings
-from app.routers import data, events, users
+from app.routers import data, events, profile, users
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
 log = logging.getLogger("app")
@@ -56,6 +56,7 @@ app.add_middleware(
 
 app.include_router(users.router)
 app.include_router(events.router)
+app.include_router(profile.router)
 app.include_router(data.router)
 
 # The coach (Member 3) lives in app/coach/. A missing or broken coach must never

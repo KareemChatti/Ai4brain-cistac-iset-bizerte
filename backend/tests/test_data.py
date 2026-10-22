@@ -27,7 +27,8 @@ def test_export_contains_everything(client, batch):
     dump = response.json()
     assert dump["user"]["user_id"] == FIXTURE_USER
     assert len(dump["events"]) == 18
-    assert len(dump["snapshots"]) == 1
+    assert len(dump["observations"]) == 6  # 1 mini-game + 5 dimensions of the round
+    assert len(dump["snapshots"]) == 3  # 2 from scoring + 1 added above
     assert len(dump["goals"]) == 1
     assert dump["exported_at"].endswith("Z")
 
@@ -108,4 +109,4 @@ def test_every_user_table_is_covered():
     """Guard: export/delete rely on these tables having a user_id column."""
     names = {table.name for table in user_tables()}
 
-    assert {"events", "snapshots", "goals"} <= names
+    assert {"events", "observations", "snapshots", "goals"} <= names
