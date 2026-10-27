@@ -34,6 +34,6 @@ describe("app shell", () => {
   it("mounts the Rami table slot on /play", async () => {
     useApp.setState({ userId: "u1", consentVersion: CONSENT_VERSION });
     renderAt("/play");
-    expect(await screen.findByText(/Rami table goes here/)).toBeTruthy();
+    expect(await screen.findByLabelText("Your hand")).toBeTruthy();
   });
 });
