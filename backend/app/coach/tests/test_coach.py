@@ -165,8 +165,18 @@ def test_chat_flags_personal_data(client, message):
     assert "personal" in body["reply"]
 
 
-def test_chat_fallback_answers_from_profile(client):
+def test_chat_fallback_answers_from_profile(client, monkeypatch):
+    from app.coach import data
+
+    monkeypatch.setattr(data, "get_profile", lambda user_id: json.loads((FIXTURES / "profile.json").read_text()))
     r = client.post("/api/coach/chat", json={"user_id": USER, "message": "What should I work on?"})
     body = r.json()
     assert body["contains_personal_data"] is False
     assert "reasoning" in body["reply"]  # lowest score in the profile fixture
+
+
+def test_data_uses_member2_profile_helpers():
+    from app.coach import data
+
+    assert data._m2("get_profile") is not None
+    assert data._m2("recent_round_ids") is not None

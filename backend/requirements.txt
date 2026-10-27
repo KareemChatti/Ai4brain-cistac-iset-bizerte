@@ -6,6 +6,7 @@ sqlalchemy==2.1.5
 pydantic==2.14.1
 numpy==2.4.6
 python-dotenv==1.2.4
+anthropic==2.1.0  # the coach (app/coach/llm.py)
 
 # Tests
 pytest==9.1.1
