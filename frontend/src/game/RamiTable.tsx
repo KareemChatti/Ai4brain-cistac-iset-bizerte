@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef } from "react";
 import type { ReactNode } from "react";
 import { useStore } from "zustand";
 import type { Hint, HintActions, RoundSummary } from "@shared/types";
-import { canLayOff, jokerStandsFor, meldValue, parseCard, shortId, topDiscard } from "../engine";
+import { GameConfig, canLayOff, jokerStandsFor, meldValue, parseCard, shortId, topDiscard } from "../engine";
 import { CardView } from "./Card";
 import { CardTracker } from "./CardTracker";
 import { DefaultHintPanel } from "./HintPanel";
@@ -21,14 +21,20 @@ export type RamiTableProps = {
   renderHintPanel?: (hint: Hint, actions: HintActions) => ReactNode;
   /** Fixed deal, for demos and tests. */
   seed?: number;
+  /** House rules (from the Rules screen); overrides quickMode. */
+  config?: GameConfig;
+  /** Coach checks during your turn. */
+  liveCoach?: boolean;
+  /** Called once when the round ends with both players' penalties (for the match score). */
+  onRoundScored?: (round: { round_id: string; user: number; ai: number; winner: "user" | "ai" }) => void;
 };
 
 export function RamiTable(props: RamiTableProps) {
-  const { userId, sessionId, opponentLevel, quickMode, hintsEnabled = true, onRoundEnd, renderHintPanel, seed } = props;
+  const { userId, sessionId, opponentLevel, quickMode, hintsEnabled = true, onRoundEnd, renderHintPanel, seed, config, liveCoach, onRoundScored } = props;
   setLogContext(userId, sessionId);
   const storeRef = useRef<ReturnType<typeof createRoundStore>>();
   if (!storeRef.current) {
-    storeRef.current = createRoundStore({ userId, sessionId, opponentLevel, quickMode, hintsEnabled, seed });
+    storeRef.current = createRoundStore({ userId, sessionId, opponentLevel, quickMode, hintsEnabled, seed, config, liveCoach });
   }
   const store = storeRef.current;
   const s = useStore(store);
@@ -49,6 +55,15 @@ export function RamiTable(props: RamiTableProps) {
       }, 50);
     };
   }, [store]);
+
+  // Report the score once, as soon as the round is over.
+  const scored = useRef(false);
+  useEffect(() => {
+    if (!s.result || scored.current) return;
+    scored.current = true;
+    const { summary, penalties } = s.result;
+    onRoundScored?.({ round_id: summary.round_id, user: penalties[0], ai: penalties[1], winner: summary.winner });
+  }, [s.result, onRoundScored]);
 
   const g = s.game;
   const hand = sortedHand(s);
@@ -164,6 +179,38 @@ export function RamiTable(props: RamiTableProps) {
       {/* Status, recall probe, messages */}
       <p className="text-center text-lg font-medium" aria-live="polite">{status}</p>
       {s.message && <p className="rounded-xl bg-rose-50 p-3 text-center text-rose-700" role="alert">{s.message}</p>}
+
+      {/* Live coach: only what the engine can prove; it never blocks a move */}
+      {s.confirm ? (
+        <div className="card border-amber-300 bg-amber-50" role="dialog" aria-label="Coach check">
+          <p className="text-sm font-semibold uppercase tracking-wide text-amber-700">Coach check before you discard</p>
+          <ul className="mt-2 list-disc space-y-1 pl-5">
+            {s.confirm.alerts.map((a) => (
+              <li key={a.kind}>{a.text}</li>
+            ))}
+          </ul>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button className="btn-ghost px-4 py-2" onClick={s.cancelDiscard}>
+              Go back
+            </button>
+            <button className="btn-primary px-4 py-2" onClick={s.confirmDiscard}>
+              Discard anyway
+            </button>
+          </div>
+        </div>
+      ) : (
+        s.liveCoach &&
+        s.alerts.length > 0 && (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3" role="status" aria-label="Coach">
+            <p className="text-sm font-semibold text-amber-700">Coach</p>
+            <ul className="mt-1 space-y-1">
+              {s.alerts.map((a) => (
+                <li key={a.kind}>{a.text}</li>
+              ))}
+            </ul>
+          </div>
+        )
+      )}
 
       {s.probe && (
         <div className="card border-brand" role="dialog" aria-label="Memory question">

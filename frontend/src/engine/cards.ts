@@ -15,17 +15,42 @@ export type Card = {
   joker: boolean;
 };
 
+/** The rules of one round. House rules vary, so every one of these can be changed on the Rules screen. */
 export type GameConfig = {
   decks: number;
   jokers: number;
   handSize: number;
   openingMin: number;
+  /** Penalty for a joker left in hand at the end of a round. */
+  jokerPenalty: number;
+  /** Penalty for a player who never opened. */
+  neverOpenedPenalty: number;
+  /** The top discard may only be taken if it is laid down in the same turn. */
+  discardMustBeUsed: boolean;
+  /** A player who holds the card a table joker stands for may swap it in and take the joker. */
+  jokerSwap: boolean;
+  /** An ace may end a run high (Q-K-A). A run never wraps (K-A-2). */
+  aceHigh: boolean;
+  /** Going out needs a final discard: you cannot lay down your last card. */
+  mustDiscardToGoOut: boolean;
 };
 
-export const FULL_CONFIG: GameConfig = { decks: 2, jokers: 4, handSize: 14, openingMin: 71 };
-export const QUICK_CONFIG: GameConfig = { decks: 1, jokers: 2, handSize: 10, openingMin: 40 };
+const COMMON_RULES = {
+  jokerPenalty: 25,
+  neverOpenedPenalty: 100,
+  discardMustBeUsed: true,
+  jokerSwap: true,
+  aceHigh: true,
+  mustDiscardToGoOut: false,
+};
+
+export const FULL_CONFIG: GameConfig = { decks: 2, jokers: 4, handSize: 14, openingMin: 71, ...COMMON_RULES };
+export const QUICK_CONFIG: GameConfig = { decks: 1, jokers: 2, handSize: 10, openingMin: 40, ...COMMON_RULES };
 
 export const configFor = (quickMode: boolean): GameConfig => (quickMode ? QUICK_CONFIG : FULL_CONFIG);
+
+/** A config saved by an older version may miss newer fields: fill them from the defaults. */
+export const withDefaults = (config: Partial<GameConfig>): GameConfig => ({ ...FULL_CONFIG, ...config });
 
 /** Rank as a number: A = 1 ... K = 13. */
 export const rankValue = (rank: Rank): number => RANKS.indexOf(rank) + 1;
@@ -74,9 +99,9 @@ export function shuffle<T>(items: T[], rng: () => number): T[] {
   return out;
 }
 
-/** Points of a card left in hand at the end of a round: face value, J/Q/K 10, ace 11, joker 25. */
-export function penaltyPoints(card: Card): number {
-  if (card.joker) return 25;
+/** Points of a card left in hand at the end of a round: face value, J/Q/K 10, ace 11, joker 25 (by default). */
+export function penaltyPoints(card: Card, jokerPenalty = 25): number {
+  if (card.joker) return jokerPenalty;
   const v = rankValue(card.rank!);
   if (v === 1) return 11;
   return Math.min(v, 10);

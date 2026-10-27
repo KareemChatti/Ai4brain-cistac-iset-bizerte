@@ -7,6 +7,12 @@ import { Card, SUITS, Suit, meldRankPoints, penaltyPoints, rankFromValue, rankVa
 
 export type MeldKind = "set" | "run";
 
+/** House rules that change which runs are valid. Set from the round's config by newGame and the grader. */
+const meldRules = { aceHigh: true };
+export function setMeldRules(rules: { aceHigh: boolean }) {
+  meldRules.aceHigh = rules.aceHigh;
+}
+
 /** One position in a laid-out meld. For runs `value` is 1..14 (14 = high ace). */
 export type Slot = { card: Card; value: number };
 
@@ -32,7 +38,7 @@ export function runLayout(cards: Card[]): Slot[] | null {
 
   const aces = reals.filter((c) => c.rank === "A").length;
   if (aces > 1) return null;
-  const options = aces ? [1, 14] : [0];
+  const options = aces ? (meldRules.aceHigh ? [1, 14] : [1]) : [0];
   for (const aceValue of options) {
     const slots: Slot[] = reals.map((card) => ({ card, value: card.rank === "A" ? aceValue : rankValue(card.rank!) }));
     slots.sort((a, b) => a.value - b.value);
@@ -135,7 +141,7 @@ function candidateMelds(cards: Card[]): Candidate[] {
     rankSuits.set(suit, [...(rankSuits.get(suit) ?? []), i]);
     if (!bySuit.has(suit)) bySuit.set(suit, new Map());
     const suitRanks = bySuit.get(suit)!;
-    for (const v of r === 1 ? [1, 14] : [r]) suitRanks.set(v, [...(suitRanks.get(v) ?? []), i]);
+    for (const v of r === 1 ? (meldRules.aceHigh ? [1, 14] : [1]) : [r]) suitRanks.set(v, [...(suitRanks.get(v) ?? []), i]);
   });
 
   const masks = new Set<number>();

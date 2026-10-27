@@ -1,10 +1,10 @@
-// Mount points for Member 1's components. When src/game/index.ts(x) exports RamiTable and
-// src/minigames/index.ts(x) exports MiniGameHost, they are picked up automatically; until then a
-// placeholder with the same props (docs/contracts.md section 2) is shown.
+// Mount point for Member 1's Rami table. When src/game/index.ts(x) exports RamiTable it is
+// picked up automatically; until then a placeholder with the same props (docs/contracts.md
+// section 2) is shown.
 
 import type { ComponentType, ReactNode } from "react";
-import type { Hint, HintActions, MiniGameId, MiniGameResult, RoundSummary } from "@shared/types";
-import { GAME_LABELS } from "./ui";
+import type { Hint, HintActions, RoundSummary } from "@shared/types";
+import type { GameConfig } from "@/engine";
 
 export type RamiTableProps = {
   userId: string;
@@ -14,19 +14,13 @@ export type RamiTableProps = {
   hintsEnabled?: boolean;
   onRoundEnd: (summary: RoundSummary) => void;
   renderHintPanel?: (hint: Hint, actions: HintActions) => ReactNode;
-};
-
-export type MiniGameHostProps = {
-  gameId: MiniGameId;
-  level: number;
-  userId: string;
-  sessionId: string;
-  onDone: (result: MiniGameResult) => void;
+  config?: GameConfig;
+  liveCoach?: boolean;
+  onRoundScored?: (round: { round_id: string; user: number; ai: number; winner: "user" | "ai" }) => void;
 };
 
 type AnyModule = Record<string, unknown>;
 const gameModules = import.meta.glob<AnyModule>("../game/index.{ts,tsx}", { eager: true });
-const miniModules = import.meta.glob<AnyModule>("../minigames/index.{ts,tsx}", { eager: true });
 
 function pick<P>(mods: Record<string, AnyModule>, name: string): ComponentType<P> | null {
   for (const mod of Object.values(mods)) {
@@ -56,19 +50,4 @@ function RamiTablePlaceholder({ onRoundEnd, quickMode, opponentLevel }: RamiTabl
   );
 }
 
-function MiniGameHostPlaceholder({ gameId, level, onDone }: MiniGameHostProps) {
-  return (
-    <div className="card flex flex-col items-center gap-4 border-dashed bg-brand-light text-center">
-      <p className="font-semibold">
-        {GAME_LABELS[gameId] ?? gameId}, level {level}
-      </p>
-      <p className="text-sm text-slate-600">The mini-game goes here once it is ready.</p>
-      <button className="btn-primary" onClick={() => onDone({ game: gameId, level_end: level, accuracy: 0.8, n_trials: 10 })}>
-        Finish a sample game
-      </button>
-    </div>
-  );
-}
-
 export const RamiTable = pick<RamiTableProps>(gameModules, "RamiTable") ?? RamiTablePlaceholder;
-export const MiniGameHost = pick<MiniGameHostProps>(miniModules, "MiniGameHost") ?? MiniGameHostPlaceholder;

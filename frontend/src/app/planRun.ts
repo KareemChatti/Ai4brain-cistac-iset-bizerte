@@ -22,10 +22,13 @@ export const usePlanRun = create<PlanRun>((set) => ({
   stop: () => set({ index: -1, steps: [] }),
 }));
 
-export function stepPath(step: PlanStep): string {
-  if (step.kind === "rami") return "/play";
-  return `/train/${step.game ?? "card_recall"}${step.level ? `?level=${step.level}` : ""}`;
+/** Every step is a Rami round now (the mini-games were removed). */
+export function stepPath(_step: PlanStep): string {
+  return "/play";
 }
+
+/** Only the Rami steps of a plan (an older server or the mock may still send mini-game steps). */
+export const ramiSteps = (steps: PlanStep[]) => steps.filter((s) => s.kind === "rami");
 
 /** Path of the step after the current one, or null when the plan is finished. */
 export function nextStepPath(): string | null {

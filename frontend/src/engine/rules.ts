@@ -42,8 +42,10 @@ export function canUseCard(state: GameState, player: Player, card: Card): boolea
   return false;
 }
 
+/** After a lay-down or lay-off: an empty hand ends the round, unless the house rule wants a final discard. */
 function finishIfEmpty(state: GameState, player: Player): GameState {
   if (state.hands[player].length === 0) {
+    if (state.config.mustDiscardToGoOut) fail("Keep one card: you go out by discarding your last card.");
     state.phase = "over";
     state.winner = player;
   }
@@ -97,9 +99,10 @@ function applyRaw(input: GameState, action: Action): GameState {
       if (state.phase !== "draw") fail("You have already drawn this turn.");
       const top = topDiscard(state);
       if (!top) fail("The discard pile is empty.");
-      if (!canUseCard(state, p, top!)) fail("You can only take the top discard if you lay it down this turn.");
+      const mustUse = state.config.discardMustBeUsed;
+      if (mustUse && !canUseCard(state, p, top!)) fail("You can only take the top discard if you lay it down this turn.");
       hand.push(state.discard.pop()!);
-      state.mustUse.push(top!.id);
+      if (mustUse) state.mustUse.push(top!.id);
       state.taken[p].push(top!);
       state.phase = "play";
       return state;
@@ -148,6 +151,7 @@ function applyRaw(input: GameState, action: Action): GameState {
 
     case "swapJoker": {
       if (state.phase !== "play") fail("Draw a card first.");
+      if (!state.config.jokerSwap) fail("Joker swaps are turned off in these rules.");
       if (!state.opened[p]) fail("You can swap a joker only after opening.");
       const meld = state.table.find((m) => m.id === action.meldId) ?? fail("That meld is not on the table.");
       const card = hand.find((c) => c.id === action.cardId) ?? fail("That card is not in your hand.");
@@ -172,7 +176,11 @@ function applyRaw(input: GameState, action: Action): GameState {
       state.discard.push(card);
       state.discarded[p].push(card.id);
       state.mustUse = [];
-      if (hand.length === 0) return finishIfEmpty(state, p);
+      if (hand.length === 0) {
+        state.phase = "over";
+        state.winner = p;
+        return state;
+      }
       state.turn += 1;
       state.current = other(p);
       state.phase = "draw";
@@ -184,12 +192,13 @@ function applyRaw(input: GameState, action: Action): GameState {
 
 export const isRoundOver = (state: GameState) => state.phase === "over";
 
-/** Penalty per player: 0 for the winner, 100 if never opened, else the cards left (joker 25). */
+/** Penalty per player: 0 for the winner, 100 if never opened, else the cards left (joker 25). Both values come from the config. */
 export function scoreRound(state: GameState): [number, number] {
+  const { neverOpenedPenalty = 100, jokerPenalty = 25 } = state.config;
   const score = (p: Player) => {
     if (state.winner === p) return 0;
-    if (!state.opened[p]) return 100;
-    return state.hands[p].reduce((s, c) => s + penaltyPoints(c), 0);
+    if (!state.opened[p]) return neverOpenedPenalty;
+    return state.hands[p].reduce((s, c) => s + penaltyPoints(c, jokerPenalty), 0);
   };
   return [score(0), score(1)];
 }
@@ -202,7 +211,7 @@ export function legalActions(state: GameState): Action[] {
   if (state.phase === "draw") {
     const actions: Action[] = [{ type: "drawStock" }];
     const top = topDiscard(state);
-    if (top && canUseCard(state, p, top)) actions.push({ type: "drawDiscard" });
+    if (top && (!state.config.discardMustBeUsed || canUseCard(state, p, top))) actions.push({ type: "drawDiscard" });
     return actions;
   }
   const actions: Action[] = [];

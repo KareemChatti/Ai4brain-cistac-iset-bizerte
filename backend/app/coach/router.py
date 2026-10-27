@@ -112,10 +112,10 @@ def contains_personal_data(message: str) -> bool:
 
 def _fallback_chat(profile: dict | None) -> str:
     if not profile:
-        return "I don't know much about you yet. Play a round or a mini-game and ask me again."
+        return "I don't know much about you yet. Play a round and ask me again."
     dims = profile.get("dimensions", {})
     if not dims:
-        return "I don't know much about you yet. Play a round or a mini-game and ask me again."
+        return "I don't know much about you yet. Play a round and ask me again."
     low = min(dims, key=lambda d: dims[d]["score"])
     e = dims[low]
     return (
