@@ -1,5 +1,5 @@
 import { Card, GameConfig, makeDeck, mulberry32, shuffle } from "./cards";
-import type { MeldKind } from "./melds";
+import { MeldKind, setMeldRules } from "./melds";
 
 export type Player = 0 | 1;
 export type Phase = "draw" | "play" | "over";
@@ -33,6 +33,7 @@ export const other = (p: Player): Player => (p === 0 ? 1 : 0);
 
 /** Deal a new round. The first player gets one extra card and starts by discarding. */
 export function newGame(seed: number, config: GameConfig, firstPlayer: Player = 0): GameState {
+  setMeldRules(config);
   const rng = mulberry32(seed);
   const stock = shuffle(makeDeck(config), rng);
   const hands: [Card[], Card[]] = [[], []];

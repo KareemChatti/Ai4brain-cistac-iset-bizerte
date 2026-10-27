@@ -4,7 +4,7 @@ import { usePlanRun } from "./planRun";
 const LINKS = [
   { to: "/home", label: "Home" },
   { to: "/play", label: "Play" },
-  { to: "/train", label: "Train" },
+  { to: "/rules", label: "Rules" },
   { to: "/dashboard", label: "Dashboard" },
   { to: "/coach", label: "Coach" },
   { to: "/data", label: "My data" },

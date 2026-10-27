@@ -150,9 +150,8 @@ ai4brain-rami/
 ├── shared/               TypeScript types + JSON fixtures (the contract in code)
 ├── frontend/
 │   └── src/
-│       ├── engine/       Rami rules, AI opponent, grader, hints
-│       ├── game/         <RamiTable/>, event logger
-│       ├── minigames/    5 mini-games + plug-in registry
+│       ├── engine/       Rami rules, house rules, AI opponent, grader, hints, live coach checks
+│       ├── game/         <RamiTable/>, match score to 401/501/701/1001, event logger
 │       ├── app/          shell and routes
 │       ├── api/          typed client + mock mode
 │       ├── coach/        review screen, hint panel, chat

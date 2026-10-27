@@ -7,12 +7,17 @@ import type { Hint, RoundSummary } from "@shared/types";
 import {
   Action,
   Card,
+  CoachAlert,
+  CoachAlertKind,
+  GameConfig,
   GameState,
   Level,
   applyAction,
   canLayOff,
   chooseAction,
+  coachAlerts,
   configFor,
+  feedsOpponent,
   findMelds,
   getHint,
   gradeInput,
@@ -40,6 +45,10 @@ export type RoundOptions = {
   opponentLevel: number;
   quickMode: boolean;
   hintsEnabled: boolean;
+  /** House rules for this round; when missing, quickMode picks the standard or quick rules. */
+  config?: GameConfig;
+  /** Coach checks during the user's turn (engine/coach.ts). */
+  liveCoach?: boolean;
   seed?: number;
   /** Pause between the AI's moves, so the user can follow them. */
   aiDelayMs?: number;
@@ -60,6 +69,11 @@ export type RoundView = {
   trackerOpen: boolean;
   probe: Probe | null;
   userTurn: number;
+  liveCoach: boolean;
+  /** What the live coach can prove right now. */
+  alerts: CoachAlert[];
+  /** A discard waiting for "Discard anyway", with the alerts it would ignore. */
+  confirm: { cardId: string; alerts: CoachAlert[] } | null;
   result: { summary: RoundSummary; penalties: [number, number]; grading: boolean } | null;
 };
 
@@ -74,7 +88,9 @@ export type RoundActions = {
   unstage: (index: number) => void;
   layDown: () => void;
   playOnMeld: (meldId: number, mode: "layOff" | "swap") => void;
-  discard: (cardId?: string) => void;
+  discard: (cardId?: string, force?: boolean) => void;
+  confirmDiscard: () => void;
+  cancelDiscard: () => void;
   requestHint: () => void;
   followHint: () => void;
   ignoreHint: () => void;
@@ -105,7 +121,8 @@ export function createRoundStore(opts: RoundOptions) {
   const level = Math.min(5, Math.max(1, Math.round(opts.opponentLevel))) as Level;
   const rng = mulberry32(seed ^ 0x9e3779b9);
   const roundId = crypto.randomUUID();
-  const config = configFor(opts.quickMode);
+  const config = opts.config ?? configFor(opts.quickMode);
+  const liveCoach = opts.liveCoach ?? false;
   const aiDelay = opts.aiDelayMs ?? DEFAULT_AI_DELAY_MS;
   const log = (source: "rami" | "coach", type: string, payload: Record<string, unknown>) =>
     logEvent(source, type, payload, roundId);
@@ -128,17 +145,52 @@ export function createRoundStore(opts: RoundOptions) {
     planStall: 0,
     aiTook: null as string | null,
     aiDiscarded: null as string | null,
+    alertsSeen: new Map<CoachAlertKind, CoachAlert>(),
     timers: [] as ReturnType<typeof setTimeout>[],
   };
 
   return createStore<RoundStore>()((set, get) => {
     const game = () => get().game;
 
+    // ---------------- live coach ----------------
+    const selectedCard = (): Card | null => {
+      const { selected } = get();
+      if (selected.length !== 1) return null;
+      return game().hands[0].find((c) => c.id === selected[0]) ?? null;
+    };
+
+    const refreshAlerts = () => {
+      if (!liveCoach) return;
+      const g = game();
+      const alerts = g.current === 0 && !get().result ? coachAlerts(g, 0, selectedCard()) : [];
+      for (const a of alerts) t.alertsSeen.set(a.kind, a);
+      set({ alerts });
+    };
+
+    /** One coach_alert event per kind seen this turn; `followed` = the user acted on it before ending the turn. */
+    const logAlerts = (turnNo: number, before: GameState, discarded: string | null) => {
+      if (!t.alertsSeen.size) return;
+      const still = new Set(coachAlerts(before, 0, null).map((a) => a.kind));
+      for (const [kind, alert] of t.alertsSeen) {
+        let followed = !still.has(kind);
+        if (kind === "feeds_opponent") {
+          const card = discarded ? before.hands[0].find((c) => c.id === discarded) : null;
+          followed = !card || feedsOpponent(before, 0, card) === null;
+        }
+        log("coach", "coach_alert", { kind, turn_no: turnNo, cards: alert.cards.map(shortId), followed });
+      }
+      t.alertsSeen.clear();
+    };
+
     const apply = (action: Action): boolean => {
       try {
-        const next = applyAction(game(), action);
+        const before = game();
+        const next = applyAction(before, action);
         set({ game: next, message: null });
-        if (next.phase === "over") endRound();
+        if (next.phase === "over") {
+          if (next.winner === 0 && action.type !== "discard") logAlerts(get().userTurn, before, null);
+          endRound();
+        } else refreshAlerts();
         return true;
       } catch (err) {
         set({ message: (err as Error).message });
@@ -175,7 +227,8 @@ export function createRoundStore(opts: RoundOptions) {
       Object.assign(t, { drawSource: "stock", drawn: "", laidDown: [], laidOff: 0, jokerSwaps: 0 });
       t.turnStart = performance.now();
       const probe = makeProbe(userTurn);
-      set({ userTurn, probe, selected: [], staged: [], hint: null, showWhy: false });
+      t.alertsSeen.clear();
+      set({ userTurn, probe, selected: [], staged: [], hint: null, showWhy: false, alerts: [], confirm: null });
     };
 
     const makeProbe = (userTurn: number): Probe | null => {
@@ -372,19 +425,34 @@ export function createRoundStore(opts: RoundOptions) {
       trackerOpen: false,
       probe: null,
       userTurn: 0,
+      liveCoach,
+      alerts: [],
+      confirm: null,
       result: null,
 
       start: () => {
         if (t.started) return;
         t.started = true;
         t.startedAt = performance.now();
-        log("rami", "round_start", { opponent_level: level, seed, quick_mode: opts.quickMode, hints_enabled: opts.hintsEnabled });
+        log("rami", "round_start", {
+          opponent_level: level,
+          seed,
+          quick_mode: config.decks === 1,
+          hints_enabled: opts.hintsEnabled,
+          live_coach: liveCoach,
+          rules: config,
+        });
         beginUserTurn();
       },
 
-      toggle: (id) =>
-        set((s) => ({ selected: s.selected.includes(id) ? s.selected.filter((x) => x !== id) : [...s.selected, id], message: null })),
-      clearSelection: () => set({ selected: [], staged: [] }),
+      toggle: (id) => {
+        set((s) => ({ selected: s.selected.includes(id) ? s.selected.filter((x) => x !== id) : [...s.selected, id], message: null }));
+        refreshAlerts();
+      },
+      clearSelection: () => {
+        set({ selected: [], staged: [] });
+        refreshAlerts();
+      },
       setSort: (sortBy) => set({ sortBy }),
 
       drawStock: () => {
@@ -454,7 +522,7 @@ export function createRoundStore(opts: RoundOptions) {
         }
       },
 
-      discard: (cardId) => {
+      discard: (cardId, force = false) => {
         if (!isUserTurn() || game().phase !== "play") return;
         const id = cardId ?? (get().selected.length === 1 ? get().selected[0] : null);
         if (!id) {
@@ -463,6 +531,17 @@ export function createRoundStore(opts: RoundOptions) {
         }
         const before = game();
         const turnNo = get().userTurn;
+        if (liveCoach && !force) {
+          // Show what the coach can prove before the discard goes through; the user decides.
+          const card = before.hands[0].find((c) => c.id === id) ?? null;
+          const alerts = coachAlerts(before, 0, card);
+          if (alerts.length) {
+            for (const a of alerts) t.alertsSeen.set(a.kind, a);
+            set({ confirm: { cardId: id, alerts }, alerts });
+            return;
+          }
+        }
+        set({ confirm: null });
         const payload: PendingTurn = {
           turn_no: turnNo,
           draw_source: t.drawSource,
@@ -480,7 +559,9 @@ export function createRoundStore(opts: RoundOptions) {
           turns_to_out_best: null,
         };
         const job: GradeJob = { turnNo, input: gradeInput(before, 0), played: id };
+        logAlerts(turnNo, before, id);
         if (!apply({ type: "discard", cardId: id })) return;
+        set({ alerts: [] });
         resolveHint("discard", { card: id });
         t.jobs.push(job);
         trackPlan(game().hands[0], turnNo);
@@ -492,6 +573,13 @@ export function createRoundStore(opts: RoundOptions) {
         }
         startAiTurn();
       },
+
+      confirmDiscard: () => {
+        const c = get().confirm;
+        if (c) get().discard(c.cardId, true);
+      },
+
+      cancelDiscard: () => set({ confirm: null }),
 
       requestHint: () => {
         const s = get();
