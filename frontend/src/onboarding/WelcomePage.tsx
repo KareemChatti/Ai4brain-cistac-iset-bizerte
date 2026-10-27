@@ -1,23 +1,56 @@
 // First version for task 3.1. Task 3.5 adds the rules carousel, the full consent text and the language choice.
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { postConsent } from "@/api/client";
+import { ApiError, createUser, postConsent } from "@/api/client";
 import { CONSENT_VERSION, useApp } from "@/app/store";
 
+/** Same rules as the backend (backend/app/privacy.py): a nickname only, never contact details. */
+export function nicknameProblem(raw: string): string | null {
+  const nickname = raw.trim().replace(/\s+/g, " ");
+  if (!nickname) return "Choose a nickname.";
+  if (nickname.length > 32) return "Keep it to 32 characters or fewer.";
+  if (/\S+@\S+\.\S+/.test(nickname) || /(?:\+?\d[\s\-.]?){8,}/.test(nickname) || /https?:\/\/|www\./i.test(nickname)) {
+    return "Please choose a nickname, not an email, phone number or link.";
+  }
+  if (!/^[\p{L}\p{N}_ .'()-]+$/u.test(nickname)) return "Use letters, digits, spaces and . ' ( ) - _ only.";
+  return null;
+}
+
+/** The backend's 422 message, without the technical wrapping. */
+function serverMessage(err: unknown): string {
+  if (err instanceof ApiError && err.status === 422) {
+    const match = err.message.match(/"msg":"(?:Value error, )?([^"]+)"/);
+    if (match) return match[1];
+  }
+  return "Something went wrong. Please try again.";
+}
+
 export default function WelcomePage() {
-  const { userId, setConsent } = useApp();
+  const { userId, setUserId, setConsent } = useApp();
+  const [nickname, setNickname] = useState("");
   const [agree, setAgree] = useState(false);
   const [analytics, setAnalytics] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const from = (useLocation().state as { from?: string } | null)?.from ?? "/home";
+  const problem = userId ? null : nicknameProblem(nickname);
 
   const submit = async () => {
+    if (problem) return setError(problem);
     setBusy(true);
+    setError(null);
     try {
-      await postConsent(userId!, CONSENT_VERSION, analytics);
+      let id = userId;
+      if (!id) {
+        id = (await createUser(nickname.trim().replace(/\s+/g, " "))).user_id;
+        setUserId(id);
+      }
+      await postConsent(id, CONSENT_VERSION, analytics);
       setConsent(CONSENT_VERSION);
       navigate(from, { replace: true });
+    } catch (err) {
+      setError(serverMessage(err));
     } finally {
       setBusy(false);
     }
@@ -32,6 +65,26 @@ export default function WelcomePage() {
         <p className="font-semibold">This is a game for training thinking skills. It is not a medical test.</p>
       </div>
       <section className="card mt-6 space-y-3">
+        {!userId && (
+          <label className="block">
+            <span className="font-semibold">Your nickname</span>
+            <input
+              type="text"
+              className="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-lg focus:border-brand focus:outline-none"
+              placeholder="e.g. RamiFan"
+              maxLength={32}
+              autoComplete="off"
+              value={nickname}
+              onChange={(e) => {
+                setNickname(e.target.value);
+                setError(null);
+              }}
+            />
+            <span className="mt-1 block text-sm text-slate-500">
+              Just a nickname: no real name, email or phone number.
+            </span>
+          </label>
+        )}
         <p>
           We record your moves, timings, mini-game answers and how you use the coach's hints. We never record your
           camera, microphone, name or contact details. The coach is an AI and can be wrong. You can export or delete
@@ -50,7 +103,12 @@ export default function WelcomePage() {
           />
           <span>Use my anonymised data to improve the app (optional)</span>
         </label>
-        <button className="btn-primary w-full" disabled={!agree || busy} onClick={submit}>
+        {error && (
+          <p className="rounded-xl bg-rose-50 p-3 text-rose-700" role="alert">
+            {error}
+          </p>
+        )}
+        <button className="btn-primary w-full" disabled={!agree || busy || (!userId && !nickname.trim())} onClick={submit}>
           Let's play
         </button>
       </section>

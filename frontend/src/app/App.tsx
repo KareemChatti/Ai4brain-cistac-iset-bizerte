@@ -1,6 +1,4 @@
-import { useEffect } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
-import { createUser } from "@/api/client";
 import { useApp } from "./store";
 import Layout from "./Layout";
 import HomePage from "./pages/HomePage";
@@ -12,27 +10,16 @@ import ReviewPage from "@/coach/ReviewPage";
 import ChatPage from "@/coach/ChatPage";
 import DashboardPage from "@/dashboard/DashboardPage";
 
-/** Creates the user once (POST /api/users) and keeps the id in localStorage. */
-function useEnsureUser() {
-  const { userId, setUserId } = useApp();
-  useEffect(() => {
-    if (userId) return;
-    createUser("player").then((r) => setUserId(r.user_id), console.error);
-  }, [userId, setUserId]);
-  return userId;
-}
-
-/** Everything except /welcome needs consent first. */
+/** Everything except /welcome needs a user (created on the welcome page with a nickname) and consent. */
 function RequireConsent({ children }: { children: JSX.Element }) {
   const consent = useApp((s) => s.consentVersion);
+  const userId = useApp((s) => s.userId);
   const location = useLocation();
-  if (!consent) return <Navigate to="/welcome" replace state={{ from: location.pathname }} />;
+  if (!consent || !userId) return <Navigate to="/welcome" replace state={{ from: location.pathname }} />;
   return children;
 }
 
 export default function App() {
-  const userId = useEnsureUser();
-  if (!userId) return <p className="p-6 text-slate-500">Getting things ready…</p>;
 
   const guard = (el: JSX.Element) => <RequireConsent>{el}</RequireConsent>;
   return (
