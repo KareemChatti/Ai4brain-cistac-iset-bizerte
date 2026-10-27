@@ -10,6 +10,7 @@ from app.db import session_scope
 from app.models import Event, Snapshot
 from app.models import Observation as ObservationRow
 from app.schemas import Profile, SnapshotOut
+from app.scoring.frustration import suggest_break
 from app.scoring.pipeline import load_observations
 from app.scoring.twin import replay
 from app.timeutil import iso, to_utc, utcnow
@@ -35,7 +36,7 @@ def build_profile(session: Session, user_id: str, now: datetime | None = None) -
         "dimensions": twin.estimates(now),
         "n_rounds": counts.get("round", 0),
         "n_minigames": counts.get("minigame", 0),
-        "flags": {"suggest_break": False},  # frustration rule arrives with task 2.4
+        "flags": {"suggest_break": suggest_break(session, user_id, now)},
     })
 
 
