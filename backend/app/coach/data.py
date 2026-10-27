@@ -7,7 +7,7 @@ from typing import Any, Callable
 
 FIXTURES = Path(__file__).resolve().parents[3] / "shared" / "fixtures"
 # Where Member 2's helpers may live; the first module that has the function wins.
-M2_MODULES = ["app.evidence", "app.scoring.twin", "app.routers.profile", "app.scoring"]
+M2_MODULES = ["app.evidence", "app.scoring.profile", "app.scoring.twin", "app.scoring"]
 
 
 def _m2(name: str) -> Callable[..., Any] | None:
