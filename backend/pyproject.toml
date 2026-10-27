@@ -6,5 +6,5 @@ requires-python = ">=3.11"
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
-testpaths = ["tests"]
+testpaths = ["tests", "app/coach/tests"]
 addopts = "-ra"

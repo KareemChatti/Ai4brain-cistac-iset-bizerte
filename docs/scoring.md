@@ -114,3 +114,38 @@ The twin therefore keeps learning instead of freezing after many games, and the 
 | Mini-game noise | r = 12 | `observations.py` `R_MINIGAME` |
 | Round noise | r = 25 | `observations.py` `R_ROUND` |
 | Trend window | 7 days | `twin.py` `TREND_WINDOW` |
+
+## 8. What-if projection
+
+`GET /api/profile/{user_id}/projection?sessions_per_week=3&weeks=4` (`scoring/projection.py`).
+
+- **Gain per session:** for each skill, the least-squares slope of the user's mean μ after each of their last 10 sessions, clamped to 0–2 points per session. With fewer than 3 sessions the gain is 0: we don't extrapolate from almost nothing.
+- **Week w:** score = μ + gain × sessions_per_week × w. Half-width of the range = 1.96 σ + 3 × w, so the band widens the further it looks.
+- Every projection carries the disclaimer *"Estimate based on your own past progress. Not a prediction of ability."*
+
+## 9. Heatmap, goals and the training plan
+
+- **Heatmap** (`scoring/heatmap.py`): the average observation value per skill and time of day (08–12, 12–16, 16–20, 20–24, 00–08, Tunisia time). Empty cells are `null`.
+- **Goals** (`scoring/goals.py`): one target per skill. When a goal is set we store today's μ as its baseline; progress = (μ now − baseline) / (target − baseline), clipped to 0–1.
+- **Plan** (`scoring/adaptive.py`):
+  - Focus = the skill with the highest need = (100 − μ) + 0.5 × (high − low), so weak *and* uncertain skills get trained.
+  - Steps: the focus mini-game, a Rami round, the mini-game of the most uncertain other skill, the focus mini-game again. Each mini-game starts at the level the user ended it last time.
+  - Opponent level 1–5: starts at 2, +1 after 2 wins in a row, −1 after 2 losses in a row.
+  - Quick round when the last 3 sessions were each under 10 minutes (and for new users).
+- **Break suggestion** (`scoring/frustration.py`): `suggest_break` is true when the last round had 3 turns in a row under 1.5 s with quality below 0.4, or was abandoned, or the user lost 3 rounds in a row today. The next plan then lowers the opponent by one level.
+
+## 10. AI Collaboration Score
+
+`GET /api/collab/{user_id}` (`scoring/collab.py`), from the coach events of the user's last 10 sessions. Each component is 0–100 and comes with `n`, the number of events it is based on.
+
+| Component (weight) | Formula |
+|---|---|
+| Clarification (20%) | % of shown hints the user questioned ("Why?" or a chat question) before acting |
+| Verification (25%) | Calibrated trust: % of hints where the decision was right (followed a good hint or ignored a bad one); +10 (max 100) if the user pressed "Check" on a hint below 60% confidence |
+| Iteration (20%) | (positions retried + reviews opened) / finished rounds, max 100 |
+| Autonomy (20%) | 100 × (1 − hints requested / turns played) |
+| Responsible use (15%) | 100, −10 per hint asked in the first 2 s of a turn, −10 per burst of 3+ hints within 3 turns, −20 per chat message with personal data |
+
+**Total** = Σ weight × score / Σ weights of the components that have data. A component with no data is `null` and left out, so someone who never asks for a hint is not punished for it.
+
+**Why these components:** a good collaborator with an AI asks why, checks before trusting (especially when the AI says it is unsure), learns from mistakes, still plays on their own, and uses the assistant responsibly. Verification has the biggest weight because blindly following a weak hint is the behaviour we most want to discourage.
