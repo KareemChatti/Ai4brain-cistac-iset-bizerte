@@ -1,6 +1,7 @@
 // First version for task 3.1. Task 3.3 adds the evidence toggle, retry, hint reveal and voice.
 import { useNavigate, useParams } from "react-router-dom";
 import { getReview } from "@/api/client";
+import { useMatch } from "@/game";
 import { useApp } from "@/app/store";
 import { useAsync } from "@/app/useAsync";
 import { nextStepPath, usePlanRun } from "@/app/planRun";
@@ -11,6 +12,7 @@ export default function ReviewPage() {
   const userId = useApp((s) => s.userId)!;
   const inPlan = usePlanRun((s) => s.index >= 0);
   const navigate = useNavigate();
+  const match = useMatch((s) => s.match);
   const { data: review, error, loading } = useAsync(() => getReview(userId, roundId), [userId, roundId]);
 
   return (
@@ -47,6 +49,16 @@ export default function ReviewPage() {
             <button className="btn-primary" onClick={() => navigate(nextStepPath() ?? "/dashboard")}>
               Continue today's plan
             </button>
+          )}
+          {!inPlan && match && (
+            <section className="card">
+              <p className="font-semibold">
+                Match to {match.target}: you {match.totals[0]}, opponent {match.totals[1]}
+              </p>
+              <button className="btn-primary mt-3" onClick={() => navigate("/play")}>
+                {match.winner ? "See the match result" : "Next round"}
+              </button>
+            </section>
           )}
         </div>
       )}

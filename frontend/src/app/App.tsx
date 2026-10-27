@@ -3,7 +3,7 @@ import { useApp } from "./store";
 import Layout from "./Layout";
 import HomePage from "./pages/HomePage";
 import PlayPage from "./pages/PlayPage";
-import TrainPage, { TrainIndex } from "./pages/TrainPage";
+import RulesPage from "./pages/RulesPage";
 import WelcomePage from "@/onboarding/WelcomePage";
 import DataPage from "@/onboarding/DataPage";
 import ReviewPage from "@/coach/ReviewPage";
@@ -28,8 +28,7 @@ export default function App() {
       <Route element={<Layout />}>
         <Route path="/home" element={guard(<HomePage />)} />
         <Route path="/play" element={guard(<PlayPage />)} />
-        <Route path="/train" element={guard(<TrainIndex />)} />
-        <Route path="/train/:gameId" element={guard(<TrainPage />)} />
+        <Route path="/rules" element={guard(<RulesPage />)} />
         <Route path="/review/:roundId" element={guard(<ReviewPage />)} />
         <Route path="/dashboard" element={guard(<DashboardPage />)} />
         <Route path="/coach" element={guard(<ChatPage />)} />

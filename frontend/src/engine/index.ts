@@ -6,3 +6,4 @@ export * from "./eval";
 export * from "./ai";
 export * from "./grader";
 export * from "./hints";
+export * from "./coach";

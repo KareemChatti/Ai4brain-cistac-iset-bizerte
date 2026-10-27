@@ -8,6 +8,7 @@
 
 import { Card, GameConfig, configFor, parseCard, shortId } from "./cards";
 import { Evaluator, View, discardCandidates, drawDistribution, expectedDistance, viewOf } from "./eval";
+import { setMeldRules } from "./melds";
 import { GameState, Player } from "./state";
 
 /** Serialisable copy of a decision point, sent to the grading worker. */
@@ -19,6 +20,8 @@ export type GradeInput = {
   unseen: string[];
   opponentTaken: string[];
   opponentOpened: boolean;
+  /** The round's rules (older callers only send `quick`). */
+  config?: GameConfig;
 };
 
 export type TurnGrade = {
@@ -40,11 +43,13 @@ export function gradeInput(state: GameState, player: Player): GradeInput {
     unseen: view.unseen.map((c) => c.id),
     opponentTaken: view.opponentTaken.map((c) => c.id),
     opponentOpened: view.opponentOpened,
+    config: state.config,
   };
 }
 
 export function viewFromInput(input: GradeInput): View {
-  const config: GameConfig = configFor(input.quick);
+  const config: GameConfig = input.config ?? configFor(input.quick);
+  setMeldRules(config); // the worker has its own copy of the meld rules
   return {
     hand: input.hand.map(parseCard),
     table: input.table.map((m) => m.map(parseCard)),

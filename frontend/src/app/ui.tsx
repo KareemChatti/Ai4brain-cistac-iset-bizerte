@@ -9,14 +9,6 @@ export const DIMENSION_LABELS: Record<DimensionKey, string> = {
   flexibility: "Flexibility",
 };
 
-export const GAME_LABELS: Record<string, string> = {
-  card_recall: "Card recall",
-  meld_spotter: "Meld spotter",
-  quick_match: "Quick match",
-  rami_puzzle: "Rami puzzle",
-  rule_switch: "Rule switch",
-};
-
 export function PageTitle({ children, sub }: { children: ReactNode; sub?: ReactNode }) {
   return (
     <header className="mb-6">

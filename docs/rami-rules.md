@@ -47,6 +47,42 @@ Your **first lay-down** must be worth at least **71 points** (40 in a quick roun
 - Fewer points is better.
 - If the stock runs out, the discard pile (except its top card) is shuffled into a new stock.
 
+## Matches: 401, 501, 701, 1001
+- A **match** is a series of rounds. Each player's penalty points add up from round to round.
+- The first player whose total reaches the **target** (401, 501, 701 or 1001, chosen on the Rules screen) **loses the match**. If both pass it in the same round, the lower total wins.
+- "Single round" turns matches off.
+- The score is kept on the device (`frontend/src/game/match.ts`); each round is still logged and reviewed on its own.
+
+## House rules (Rules screen)
+Every rule below can be changed on `/rules` and is saved on the device. The defaults are the rules described above.
+
+| Rule | Default | Engine field |
+|---|---|---|
+| Decks / jokers | 2 + 4 (quick: 1 + 2) | `decks`, `jokers` |
+| Cards dealt | 14 (quick: 10), first player +1 | `handSize` |
+| Points to open | 71 (quick: 40) | `openingMin` |
+| Joker left in hand | 25 | `jokerPenalty` |
+| Never opened | 100 | `neverOpenedPenalty` |
+| Top discard only if laid down this turn | on | `discardMustBeUsed` |
+| Joker swap | on | `jokerSwap` |
+| Ace high (Q-K-A); never K-A-2 | on | `aceHigh` |
+| Must go out with a final discard | off | `mustDiscardToGoOut` |
+| One joker per meld | fixed | (not changeable yet) |
+
+The rules travel with each round (`round_start.rules`) and with each grading job, so the grader scores a turn under the rules it was played with.
+
+## Live coach
+During your turn the coach shows only what the engine can **prove** from what you see (`frontend/src/engine/coach.ts`):
+
+| Check | When |
+|---|---|
+| `missed_lay_off` | you have opened and a card in your hand fits a meld on the table |
+| `joker_swap` | you hold the card a table joker stands for, and you could use the joker this turn |
+| `opening_reachable` | you have not opened and your melds already reach the opening minimum |
+| `feeds_opponent` | the card you are about to discard fits a table meld (opponent has opened), or completes a meld with two cards your opponent took from the discard pile and still holds |
+
+When you press Discard and a check applies, the coach asks once ("Go back" / "Discard anyway"); it never blocks a move. Each check seen in a turn is logged once as a `coach_alert` event `{kind, turn_no, cards, followed}`, where `followed` means you acted on it before the turn ended. Turn it off on the Rules screen.
+
 ## The AI opponent (levels 1–5)
 | Level | How it plays |
 |---|---|

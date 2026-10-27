@@ -81,9 +81,8 @@ def test_plan_for_a_new_user(client):
     uid = new_user(client)
     plan = Plan.model_validate(client.get(f"/api/plan/{uid}").json())
     assert plan.opponent_level == 2
-    assert [s.kind for s in plan.steps] == ["minigame", "rami", "minigame", "minigame"]
-    assert plan.steps[0].game == plan.steps[3].game
-    assert plan.reason
+    assert [s.kind for s in plan.steps] == ["rami"]
+    assert plan.reason and "In this round" in plan.reason
 
 
 def test_plan_focuses_the_weakest_dimension(client):
@@ -95,7 +94,7 @@ def test_plan_focuses_the_weakest_dimension(client):
     client.post("/api/events", json={"events": events})
     plan = client.get(f"/api/plan/{uid}").json()
     assert plan["focus"] != "memory"
-    assert plan["steps"][0]["level"] == 1
+    assert plan["steps"] == [{"kind": "rami"}]
 
 
 def test_opponent_level_rule():
