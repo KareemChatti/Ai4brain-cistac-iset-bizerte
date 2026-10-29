@@ -17,6 +17,7 @@ export type RamiTableProps = {
   config?: GameConfig;
   liveCoach?: boolean;
   onRoundScored?: (round: { round_id: string; user: number; ai: number; winner: "user" | "ai" }) => void;
+  matchId?: () => string | null;
 };
 
 type AnyModule = Record<string, unknown>;

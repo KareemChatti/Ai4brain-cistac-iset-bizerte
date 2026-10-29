@@ -52,14 +52,17 @@ def collab_from_events(events) -> CollabScore:
     )
 
     # Verification: calibrated trust. Right = followed a good hint or ignored a bad one.
+    # Live coach alerts only state facts the engine can prove, so acting on one counts as right.
     decided = [h for h in followed if h in outcome and isinstance(outcome[h], bool)]
-    if decided:
+    alerts = [a for a in of("coach_alert") if isinstance(a.payload.get("followed"), bool)]
+    if decided or alerts:
         right = sum(followed[h].payload.get("followed") is outcome[h] for h in decided)
-        score = _pct(right, len(decided))
+        right += sum(a.payload.get("followed") is True for a in alerts)
+        score = _pct(right, len(decided) + len(alerts))
         low_conf = [h for h, e in shown.items() if (num(e.payload, "confidence") or 1) < LOW_CONFIDENCE]
         if any(h in checked for h in low_conf):
             score = min(100.0, score + 10)
-        verification = {"score": score, "n": len(decided)}
+        verification = {"score": score, "n": len(decided) + len(alerts)}
     else:
         verification = {"score": None, "n": 0}
 

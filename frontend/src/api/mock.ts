@@ -44,6 +44,8 @@ function route(method: string, path: string, body: any): unknown {
       }
       return profile;
     }
+    case "GET /api/matches":
+      return [];
     case "GET /api/plan":
       return plan;
     case "GET /api/collab":

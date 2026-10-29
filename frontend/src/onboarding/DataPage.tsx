@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { deleteData, exportData } from "@/api/client";
 import { useApp } from "@/app/store";
 import { PageTitle } from "@/app/ui";
+import { disconnectLive, useMatch } from "@/game";
 
 export default function DataPage() {
   const { userId, reset } = useApp();
@@ -21,7 +22,9 @@ export default function DataPage() {
   };
 
   const remove = async () => {
+    disconnectLive(); // nothing more streams for this user
     await deleteData(userId!);
+    useMatch.getState().endMatch(); // the running match kept on this device goes too
     reset();
     navigate("/welcome", { replace: true });
   };

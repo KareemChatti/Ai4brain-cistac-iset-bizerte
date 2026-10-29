@@ -8,6 +8,8 @@ import { GameConfig, canLayOff, jokerStandsFor, meldValue, parseCard, shortId, t
 import { CardView } from "./Card";
 import { CardTracker } from "./CardTracker";
 import { DefaultHintPanel } from "./HintPanel";
+import { LiveBadge, LiveCoachFeed } from "./LiveCoachFeed";
+import { connectLive } from "./live";
 import { setLogContext } from "./logger";
 import { createRoundStore, sortedHand } from "./store";
 
@@ -25,16 +27,18 @@ export type RamiTableProps = {
   config?: GameConfig;
   /** Coach checks during your turn. */
   liveCoach?: boolean;
+  /** The id of the match this round belongs to, if any. */
+  matchId?: () => string | null;
   /** Called once when the round ends with both players' penalties (for the match score). */
   onRoundScored?: (round: { round_id: string; user: number; ai: number; winner: "user" | "ai" }) => void;
 };
 
 export function RamiTable(props: RamiTableProps) {
-  const { userId, sessionId, opponentLevel, quickMode, hintsEnabled = true, onRoundEnd, renderHintPanel, seed, config, liveCoach, onRoundScored } = props;
+  const { userId, sessionId, opponentLevel, quickMode, hintsEnabled = true, onRoundEnd, renderHintPanel, seed, config, liveCoach, onRoundScored, matchId } = props;
   setLogContext(userId, sessionId);
   const storeRef = useRef<ReturnType<typeof createRoundStore>>();
   if (!storeRef.current) {
-    storeRef.current = createRoundStore({ userId, sessionId, opponentLevel, quickMode, hintsEnabled, seed, config, liveCoach });
+    storeRef.current = createRoundStore({ userId, sessionId, opponentLevel, quickMode, hintsEnabled, seed, config, liveCoach, matchId });
   }
   const store = storeRef.current;
   const s = useStore(store);
@@ -55,6 +59,9 @@ export function RamiTable(props: RamiTableProps) {
       }, 50);
     };
   }, [store]);
+
+  // Open the live session (kept for the rest of the visit, so the review gets the updated profile too).
+  useEffect(() => connectLive(userId), [userId]);
 
   // Report the score once, as soon as the round is over.
   const scored = useRef(false);
@@ -177,7 +184,11 @@ export function RamiTable(props: RamiTableProps) {
       </section>
 
       {/* Status, recall probe, messages */}
-      <p className="text-center text-lg font-medium" aria-live="polite">{status}</p>
+      <div className="flex flex-col items-center gap-1">
+        <p className="text-center text-lg font-medium" aria-live="polite">{status}</p>
+        <LiveBadge />
+      </div>
+      <LiveCoachFeed roundId={s.roundId} />
       {s.message && <p className="rounded-xl bg-rose-50 p-3 text-center text-rose-700" role="alert">{s.message}</p>}
 
       {/* Live coach: only what the engine can prove; it never blocks a move */}

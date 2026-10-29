@@ -14,6 +14,29 @@ let context: { userId: string | null; sessionId: string | null } = { userId: nul
 const buffer: Event[] = [];
 const listeners = new Set<(event: Event) => void>();
 
+// Live session (src/game/live.ts): while a socket is attached, events stream through it and
+// wait in `inflight` until the server acknowledges them.
+let transport: ((events: Event[]) => boolean) | null = null;
+const inflight = new Map<string, Event>();
+
+export function attachTransport(send: (events: Event[]) => boolean) {
+  transport = send;
+  void flush();
+}
+
+/** The socket closed: unacknowledged events go back to the buffer for HTTP (duplicates are safe). */
+export function detachTransport() {
+  transport = null;
+  if (!inflight.size) return;
+  buffer.unshift(...[...inflight.values()].sort((a, b) => a.ts.localeCompare(b.ts)));
+  inflight.clear();
+  void flush();
+}
+
+export function ackEvents(ids: string[]) {
+  for (const id of ids) inflight.delete(id);
+}
+
 /** Watch every event as it is logged (used by tests and the dev pages). Returns an unsubscribe function. */
 export function onEvent(listener: (event: Event) => void): () => void {
   listeners.add(listener);
@@ -51,7 +74,7 @@ export function logEvent(
   };
   buffer.push(event);
   listeners.forEach((listener) => listener(event));
-  if (buffer.length >= BATCH_SIZE) void flush();
+  if (transport || buffer.length >= BATCH_SIZE) void flush();
   return event;
 }
 
@@ -61,6 +84,10 @@ export async function flush(): Promise<void> {
   const events = buffer.splice(0, buffer.length);
   if (USE_MOCK) {
     console.log(`[logger] ${events.length} event(s)`, events);
+    return;
+  }
+  if (transport?.(events)) {
+    for (const e of events) inflight.set(e.event_id, e);
     return;
   }
   try {
@@ -79,8 +106,9 @@ export async function flush(): Promise<void> {
 
 /** On page hide, hand the rest to the browser with sendBeacon (survives closing the tab). */
 function flushOnHide() {
-  if (!buffer.length || USE_MOCK) return;
-  const events = buffer.splice(0, buffer.length);
+  if (USE_MOCK || (!buffer.length && !inflight.size)) return;
+  // Streamed events the server has not acknowledged yet are re-sent too; the backend skips duplicates.
+  const events = [...inflight.values(), ...buffer.splice(0, buffer.length)];
   const sent = typeof navigator !== "undefined" && navigator.sendBeacon?.(ENDPOINT, JSON.stringify({ events }));
   if (!sent) buffer.unshift(...events);
 }
@@ -89,3 +117,4 @@ if (typeof window !== "undefined") window.addEventListener("pagehide", flushOnHi
 
 /** For tests only. */
 export const _buffer = buffer;
+export const _inflight = inflight;

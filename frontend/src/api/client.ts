@@ -9,6 +9,7 @@ import type {
   Goal,
   Heatmap,
   Hint,
+  MatchSummary,
   Plan,
   Profile,
   Projection,
@@ -80,6 +81,9 @@ export const getGoals = (userId: string) => request<Goal[]>("GET", `/api/goals/$
 
 export const postGoal = (userId: string, dimension: DimensionKey, target: number) =>
   request<Goal[]>("POST", `/api/goals/${enc(userId)}`, { dimension, target });
+
+export const getMatches = (userId: string, limit = 20) =>
+  request<MatchSummary[]>("GET", `/api/matches/${enc(userId)}?limit=${limit}`);
 
 export const getEvidence = (userId: string, roundId: string) =>
   request<EvidenceSheet>("GET", `/api/evidence/${enc(userId)}/${enc(roundId)}`);

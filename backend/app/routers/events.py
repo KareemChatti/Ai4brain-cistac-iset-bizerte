@@ -30,18 +30,25 @@ def post_events(batch: EventBatch, session: Session = Depends(get_session)) -> E
     the batch, new or already stored, so the client can drop all of them from its buffer.
     Events of a user who deleted their data are dropped.
     """
-    new_events = store_events(session, batch.events)
+    ingest(session, batch.events)
+    return EventsAccepted(accepted=len(batch.events))
 
+
+def ingest(session: Session, events: list[EventIn]) -> list[EventIn]:
+    """Store events (skipping duplicates), then score them. Shared by HTTP and the live socket.
+
+    Returns the events that were new.
+    """
+    new_events = store_events(session, events)
     by_user: dict[str, list[EventIn]] = defaultdict(list)
     for event in new_events:
         by_user[str(event.user_id)].append(event)
-    for user_id, events in by_user.items():
+    for user_id, user_events in by_user.items():
         try:
-            pipeline.on_new_events(user_id, events)
+            pipeline.on_new_events(user_id, user_events)
         except Exception:  # the events are stored; scoring can be replayed later
             log.exception("Scoring pipeline failed for user %s", user_id)
-
-    return EventsAccepted(accepted=len(batch.events))
+    return new_events
 
 
 def store_events(session: Session, events: list[EventIn]) -> list[EventIn]:
