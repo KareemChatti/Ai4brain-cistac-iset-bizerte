@@ -8,7 +8,7 @@ import { GameState, TableMeld, newGame } from "../state";
 const c = (...ids: string[]) => ids.map((id) => parseCard(id.includes(".") ? id : `${id}.1`));
 const meld = (id: number, owner: 0 | 1, ...ids: string[]): TableMeld => ({ id, owner, kind: "run", cards: c(...ids) });
 
-function position(hand0: string[], rest: Partial<GameState> & { config?: Partial<GameConfig> } = {}): GameState {
+function position(hand0: string[], rest: Partial<Omit<GameState, "config">> & { config?: Partial<GameConfig> } = {}): GameState {
   const config = { ...FULL_CONFIG, ...rest.config };
   return {
     ...newGame(1, config),
