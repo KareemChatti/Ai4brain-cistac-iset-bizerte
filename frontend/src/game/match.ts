@@ -4,6 +4,7 @@
 
 import { create } from "zustand";
 import { FULL_CONFIG, GameConfig, QUICK_CONFIG, withDefaults } from "../engine";
+import { logEvent } from "./logger";
 
 export type MatchTarget = 401 | 501 | 701 | 1001 | null;
 export const MATCH_TARGETS: MatchTarget[] = [401, 501, 701, 1001, null];
@@ -25,6 +26,8 @@ export const gameConfigOf = (r: RamiRules): GameConfig => withDefaults(r);
 
 export type MatchRound = { round_id: string; user: number; ai: number; winner: "user" | "ai" };
 export type Match = {
+  /** Sent with match_start, match_end and each round_start (older saved matches may lack it). */
+  match_id?: string;
   target: number;
   rounds: MatchRound[];
   totals: [number, number];
@@ -63,6 +66,8 @@ type MatchState = {
   setRules: (rules: RamiRules) => void;
   /** Start a match with the current target (or clear it for single rounds). */
   newMatch: () => void;
+  /** The running match's id, starting a match if none is running. Null for single rounds. */
+  ensureMatch: () => string | null;
   /** Add one finished round. Starts a match first if none is running. */
   recordRound: (round: MatchRound) => void;
   endMatch: () => void;
@@ -76,20 +81,52 @@ export const useMatch = create<MatchState>((set, get) => ({
     set({ rules });
   },
   newMatch: () => {
-    const target = get().rules.matchTarget;
-    const match: Match | null = target ? { target, rounds: [], totals: [0, 0], winner: null } : null;
+    const { rules } = get();
+    const target = rules.matchTarget;
+    const match: Match | null = target
+      ? { match_id: crypto.randomUUID(), target, rounds: [], totals: [0, 0], winner: null }
+      : null;
     save(KEYS.match, match);
     set({ match });
+    if (match) {
+      logEvent("rami", "match_start", {
+        match_id: match.match_id,
+        target,
+        rules: {
+          decks: rules.decks,
+          jokers: rules.jokers,
+          hand_size: rules.handSize,
+          opening_min: rules.openingMin,
+          opponent_level: rules.opponentLevel,
+        },
+      });
+    }
+  },
+  ensureMatch: () => {
+    if (!get().rules.matchTarget) return null;
+    const m = get().match;
+    if (!m || m.winner || !m.match_id) get().newMatch();
+    return get().match?.match_id ?? null;
   },
   recordRound: (round) => {
     if (!get().rules.matchTarget) return;
-    if (!get().match || get().match!.winner) get().newMatch();
+    get().ensureMatch();
     const m = get().match!;
     if (m.rounds.some((r) => r.round_id === round.round_id)) return;
     const totals: [number, number] = [m.totals[0] + round.user, m.totals[1] + round.ai];
     const match: Match = { ...m, rounds: [...m.rounds, round], totals, winner: matchWinner(totals, m.target) };
     save(KEYS.match, match);
     set({ match });
+    if (match.winner) {
+      logEvent("rami", "match_end", {
+        match_id: match.match_id,
+        winner: match.winner,
+        user_total: totals[0],
+        ai_total: totals[1],
+        rounds: match.rounds.length,
+        target: match.target,
+      });
+    }
   },
   endMatch: () => {
     save(KEYS.match, null);

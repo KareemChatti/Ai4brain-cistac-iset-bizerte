@@ -128,3 +128,27 @@ export type HintActions = {
 
 export type RoundSummary = { round_id: string; winner: "user" | "ai"; turns: number; user_penalty: number };
 export type MiniGameResult = { game: MiniGameId; level_end: number; accuracy: number; n_trials: number };
+
+// ---------- matches and the live session (contracts §5b) ----------
+export type MatchRound = { round_id: string; user_penalty: number; ai_penalty: number; winner: "user" | "ai" | null };
+export type MatchSummary = {
+  match_id: string;
+  target: number;
+  started_at: string;
+  ended_at: string | null;
+  winner: "user" | "ai" | null;
+  user_total: number;
+  ai_total: number;
+  rounds: MatchRound[];
+};
+
+export type CoachAlertKind = "missed_lay_off" | "joker_swap" | "opening_reachable" | "feeds_opponent";
+
+export type LiveClientMessage = { type: "events"; events: Event[] } | { type: "ping" };
+export type LiveServerMessage =
+  | { type: "hello"; user_id: string }
+  | { type: "ack"; event_ids: string[] }
+  | { type: "coach"; kind: string; text: string; turn_no: number | null; round_id: string | null }
+  | { type: "profile"; profile: Profile }
+  | { type: "pong" }
+  | { type: "error"; message: string };

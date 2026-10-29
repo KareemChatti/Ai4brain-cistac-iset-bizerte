@@ -92,7 +92,9 @@ type Event = {
 
 | source | type | payload | sent by |
 |---|---|---|---|
-| rami | `round_start` | `{opponent_level, seed, quick_mode, hints_enabled}` | M1 |
+| rami | `round_start` | `{opponent_level, seed, quick_mode, hints_enabled, live_coach, rules, match_id}` (`match_id` null for single rounds) | M1 |
+| rami | `match_start` | `{match_id, target, rules: {decks, jokers, hand_size, opening_min, opponent_level}}` (`round_id` null) | M1 |
+| rami | `match_end` | `{match_id, winner: "user"|"ai", user_total, ai_total, rounds, target}` (`round_id` null) | M1 |
 | rami | `turn` | `{turn_no, draw_source: "stock"\|"discard", drawn, discarded, laid_down: string[][], laid_off: number, joker_swaps: number, think_ms, options_count, missed: {lay_offs, joker_swaps, melds_in_hand}, fed_opponent: boolean, quality: number\|null, best_discard: string\|null, turns_to_out_played: number\|null, turns_to_out_best: number\|null}` | M1 |
 | rami | `recall_probe` | `{turn_no, question, correct: boolean, rt_ms}` | M1 |
 | rami | `plan_switch` | `{turn_no, from: "run"\|"set", to: "run"\|"set", turns_waited}` | M1 |
@@ -111,6 +113,7 @@ type Event = {
 | coach | `chat_message` | `{length, contains_personal_data: boolean}` (never the text) | M3 |
 | app | `consent_given` | `{consent_version, analytics: boolean}` | M3 |
 | app | `goal_set` | `{dimension, target}` | M3 |
+| coach | `coach_alert` | `{kind: "missed_lay_off"|"joker_swap"|"opening_reachable"|"feeds_opponent", turn_no, cards: string[], followed: boolean}` one per kind and turn, sent when the turn ends | M1 (table) |
 
 ## 5. Backend API (M2 builds, M1 and M3 call)
 
@@ -132,8 +135,23 @@ Base URL from env `VITE_API_URL` (frontend). All JSON.
 | `POST /api/coach/review` | `{user_id, round_id}` | `Review` | M3 |
 | `POST /api/coach/explain-hint` | `{user_id, hint: Hint, state_summary}` | `{text}` | M3 |
 | `POST /api/coach/chat` | `{user_id, message}` | `{reply, fact_ids}` | M3 |
+| `GET /api/matches/{user_id}` | `?limit=20` | `MatchSummary[]`, newest first | M2 |
+| `WS /ws/session/{user_id}` | live session, see §5b | messages | M2 |
 | `GET /api/data/{user_id}/export` | | full JSON dump | M2 |
 | `DELETE /api/data/{user_id}` | | `{deleted: true}` | M2 |
+
+## 5b. Live session (WebSocket)
+
+While the app is open, the table keeps one WebSocket to `/ws/session/{user_id}` (`ws://` locally, `wss://` when deployed; `VITE_WS_URL` overrides the address). Events are streamed the moment they are logged instead of in HTTP batches; the server stores and scores them exactly like `POST /api/events`. If the socket is down, the frontend falls back to HTTP and reconnects by itself. Only the app's own origins may connect, and every event must belong to the session's user.
+
+| Direction | Message |
+|---|---|
+| client → server | `{type: "events", events: Event[]}`, `{type: "ping"}` |
+| server → client | `{type: "hello", user_id}` on connect |
+| | `{type: "ack", event_ids: string[]}` once the events are stored (the client drops them from its retry list) |
+| | `{type: "coach", kind, text, turn_no, round_id}` live coach message; `kind` is `round_start`, `pace`, `fed_opponent`, `recall`, `alerts_skipped`, `round_summary` or `match_summary` |
+| | `{type: "profile", profile: Profile}` after a round is scored |
+| | `{type: "pong"}`, `{type: "error", message}` (the socket stays open) |
 
 ## 6. Response shapes
 
@@ -177,6 +195,10 @@ type Heatmap = { rows: DimensionKey[]; cols: string[];  // time slots like "08-1
 
 type Goal = { dimension: DimensionKey; target: number; created_at: string; progress: number };
 
+type MatchRound = { round_id: string; user_penalty: number; ai_penalty: number; winner: "user" | "ai" | null };
+type MatchSummary = { match_id: string; target: number; started_at: string; ended_at: string | null;
+  winner: "user" | "ai" | null; user_total: number; ai_total: number; rounds: MatchRound[] };
+
 type Fact = { id: string;            // "F1", "F2", ...
   dimension: DimensionKey | "general"; kind: string;  // "missed_lay_off", "fed_opponent", "fast_and_wrong", ...
   turn_no: number | null; text: string; value: number | null };
@@ -218,3 +240,4 @@ Backend: M2's tests load `shared/fixtures/events-round.json` to check that the s
 
 ## Changelog
 - Oct 19: first version.
+- Oct 29: Rami-only matches and the live session. Events `match_start`, `match_end`, `coach_alert`; `round_start` gains `live_coach`, `rules`, `match_id`. Endpoints `GET /api/matches/{user_id}` and `WS /ws/session/{user_id}` (§5b). Agreed in the Oct 28–29 plan.

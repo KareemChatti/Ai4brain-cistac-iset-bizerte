@@ -49,6 +49,8 @@ export type RoundOptions = {
   config?: GameConfig;
   /** Coach checks during the user's turn (engine/coach.ts). */
   liveCoach?: boolean;
+  /** The match this round belongs to (asked once, when the round starts). */
+  matchId?: () => string | null;
   seed?: number;
   /** Pause between the AI's moves, so the user can follow them. */
   aiDelayMs?: number;
@@ -441,6 +443,7 @@ export function createRoundStore(opts: RoundOptions) {
           hints_enabled: opts.hintsEnabled,
           live_coach: liveCoach,
           rules: config,
+          match_id: opts.matchId?.() ?? null,
         });
         beginUserTurn();
       },

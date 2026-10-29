@@ -102,6 +102,7 @@ export default function PlayPage() {
         hintsEnabled={rules.hintsEnabled}
         liveCoach={rules.liveCoach}
         onRoundScored={recordRound}
+        matchId={() => useMatch.getState().ensureMatch()}
         onRoundEnd={onRoundEnd}
       />
     </>
