@@ -169,3 +169,22 @@ class EvidenceSheet(BaseModel):
     facts: list[Fact]
     stats: dict[str, float]
     profile_delta: dict[DimensionKey, float]
+
+
+# ---------- matches ----------
+class MatchRound(BaseModel):
+    round_id: str
+    user_penalty: int
+    ai_penalty: int
+    winner: Literal["user", "ai"] | None
+
+
+class MatchSummary(BaseModel):
+    match_id: str
+    target: int
+    started_at: str
+    ended_at: str | None
+    winner: Literal["user", "ai"] | None
+    user_total: int
+    ai_total: int
+    rounds: list[MatchRound]
