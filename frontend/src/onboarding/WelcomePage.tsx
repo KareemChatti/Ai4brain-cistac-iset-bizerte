@@ -61,7 +61,11 @@ export default function WelcomePage() {
       <h1 className="text-3xl font-bold text-brand">Welcome to AI4Brain Rami</h1>
       <div className="mt-4 space-y-2 text-lg text-slate-700">
         <p>Play Rami against the computer and get a coach that explains your decisions.</p>
-        <p>Play whole matches to 401, 501, 701 or 1001 with your own house rules. Each decision trains memory, attention, speed, reasoning and flexibility.</p>
+        <p>
+          Play whole matches to 401, 501, 701 or 1001 with your own house rules (the Rules tab). During your turn the
+          coach warns you about what it can prove, like a missed lay-off or a discard that helps your opponent. Each
+          decision trains memory, attention, speed, reasoning and flexibility.
+        </p>
         <p className="font-semibold">This is a game for training thinking skills. It is not a medical test.</p>
       </div>
       <section className="card mt-6 space-y-3">
