@@ -180,3 +180,116 @@ def test_data_uses_member2_profile_helpers():
 
     assert data._m2("get_profile") is not None
     assert data._m2("recent_round_ids") is not None
+
+
+# ---------------- local model through Ollama ----------------
+import io  # noqa: E402
+import json as _json  # noqa: E402
+import urllib.error  # noqa: E402
+
+from app.coach import llm  # noqa: E402
+from app.coach.schemas import ReviewDraft  # noqa: E402
+
+
+class _FakeResponse(io.BytesIO):
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+
+def _ollama(monkeypatch, reply=None, error=None, capture=None):
+    """Replace the HTTP call to Ollama: return `reply` as the model's message, or raise `error`."""
+    monkeypatch.delenv("COACH_LLM_DISABLED", raising=False)
+    monkeypatch.setenv("COACH_PROVIDER", "ollama")
+
+    def fake_urlopen(request, timeout):
+        if capture is not None:
+            capture.append(_json.loads(request.data.decode()) if request.data else None)
+        if error:
+            raise error
+        return _FakeResponse(_json.dumps(reply).encode())
+
+    monkeypatch.setattr(llm.urllib.request, "urlopen", fake_urlopen)
+    monkeypatch.setattr(llm, "_down_until", 0.0)
+
+
+def _valid_draft() -> dict:
+    return {
+        "headline": "A close round.",
+        "key_moments": [{"turn_no": 7, "title": "Fed the opponent", "explanation": "8H helped them.",
+                         "tip": "Watch what they pick up.", "fact_ids": ["F1"]}],
+        "strengths": [{"text": "A good opening.", "fact_ids": ["F5"]}],
+        "next_focus": {"dimension": "memory", "text": "Track discards.", "fact_ids": ["F1"]},
+        "voice_text": "A close round. Watch what your opponent picks up.",
+    }
+
+
+def test_provider_defaults_to_ollama_without_a_key(monkeypatch):
+    monkeypatch.delenv("COACH_PROVIDER", raising=False)
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    assert llm.provider() == "ollama"
+    assert llm.model_name() == llm.DEFAULT_OLLAMA_MODEL
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "x")
+    assert llm.provider() == "anthropic"
+    monkeypatch.setenv("COACH_PROVIDER", "ollama")
+    assert llm.provider() == "ollama"
+
+
+def test_ollama_reply_is_parsed_and_the_schema_is_sent_inline(monkeypatch):
+    sent = []
+    _ollama(monkeypatch, reply={"message": {"content": _json.dumps(_valid_draft())}, "done": True}, capture=sent)
+
+    draft = llm.complete_json("system", "user", ReviewDraft, timeout=5)
+
+    assert draft.headline == "A close round."
+    body = sent[0]
+    assert body["stream"] is False and body["model"] == llm.model_name()
+    assert "$ref" not in _json.dumps(body["format"])  # refs expanded for small local models
+    assert body["format"]["properties"]["key_moments"]["items"]["properties"]["fact_ids"]
+
+
+def test_ollama_not_running_is_reported_clearly(monkeypatch):
+    _ollama(monkeypatch, error=urllib.error.URLError(ConnectionRefusedError()))
+    with pytest.raises(llm.LLMUnavailable, match="not running"):
+        llm.complete_json("s", "u", ReviewDraft, timeout=5)
+
+
+def test_missing_model_says_how_to_install_it(monkeypatch):
+    _ollama(monkeypatch, error=urllib.error.HTTPError("u", 404, "not found", {}, None))
+    with pytest.raises(llm.LLMUnavailable, match="ollama pull"):
+        llm.complete_json("s", "u", ReviewDraft, timeout=5)
+
+
+def test_ollama_timeout_and_bad_json_fall_back(monkeypatch):
+    _ollama(monkeypatch, error=TimeoutError())
+    with pytest.raises(llm.LLMUnavailable, match="timeout"):
+        llm.complete_json("s", "u", ReviewDraft, timeout=5)
+    _ollama(monkeypatch, reply={"message": {"content": "not json at all"}})
+    with pytest.raises(llm.LLMUnavailable, match="invalid JSON"):
+        llm.complete_json("s", "u", ReviewDraft, timeout=5)
+
+
+def test_review_from_ollama_passes_the_guardrails(client, monkeypatch):
+    _ollama(monkeypatch, reply={"message": {"content": _json.dumps(_valid_draft())}})
+    review = client.post("/api/coach/review", json={"user_id": USER, "round_id": ROUND}).json()
+    assert review["source"] == "llm"
+    assert review["key_moments"][0]["fact_ids"] == ["F1"]
+
+
+def test_review_from_ollama_with_invented_facts_is_cleaned(client, monkeypatch):
+    bad = _valid_draft()
+    bad["key_moments"][0]["fact_ids"] = ["F99"]  # a fact that is not in the evidence sheet
+    _ollama(monkeypatch, reply={"message": {"content": _json.dumps(bad)}})
+    review = client.post("/api/coach/review", json={"user_id": USER, "round_id": ROUND}).json()
+    assert all("F99" not in m["fact_ids"] for m in review["key_moments"])
+
+
+def test_a_stopped_ollama_is_remembered_briefly(monkeypatch):
+    calls = []
+    _ollama(monkeypatch, error=urllib.error.URLError(ConnectionRefusedError()), capture=calls)
+    for _ in range(3):
+        with pytest.raises(llm.LLMUnavailable, match="not running"):
+            llm.complete_json("s", "u", ReviewDraft, timeout=5)
+    assert len(calls) == 1  # the next calls fail at once instead of waiting for Windows to refuse again
