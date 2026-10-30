@@ -79,5 +79,12 @@ else:
 
 
 @app.get("/api/health", tags=["meta"])
-def health() -> dict[str, str]:
-    return {"status": "ok", "version": __version__}
+def health() -> dict[str, object]:
+    """Server status, and whether the coach's language model can answer (see app/coach/llm.py)."""
+    try:
+        from app.coach.llm import status as coach_status
+
+        coach = coach_status()
+    except Exception as exc:  # noqa: BLE001  (a missing coach must not break the health check)
+        coach = {"ready": False, "detail": f"coach not loaded ({type(exc).__name__})"}
+    return {"status": "ok", "version": __version__, "coach_llm": coach}
