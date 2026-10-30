@@ -28,6 +28,9 @@ class Settings:
         default_factory=lambda: DEV_ORIGINS + _split(os.getenv("FRONTEND_URL"))
     )
     retention_days: int = field(default_factory=lambda: int(os.getenv("RETENTION_DAYS", "90")))
+    inactive_days: int = field(default_factory=lambda: int(os.getenv("INACTIVE_DAYS", "180")))
+    # Load the simulated demo players at startup (for the deployed demo; its disk may be wiped).
+    seed_demo: bool = field(default_factory=lambda: os.getenv("SEED_DEMO", "").lower() in ("1", "true", "yes"))
 
 
 settings = Settings()

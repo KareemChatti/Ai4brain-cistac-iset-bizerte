@@ -53,14 +53,21 @@ def export_data(user_id: UUID, session: Session = Depends(get_session)) -> JSONR
 @router.delete("/{user_id}", response_model=Deleted)
 def delete_data(user_id: UUID, session: Session = Depends(get_session)) -> Deleted:
     """Delete every row about the user. Safe to call twice."""
-    uid = str(user_id)
+    delete_user_data(session, str(user_id))
+    session.commit()
+    return Deleted()
+
+
+def delete_user_data(session: Session, uid: str) -> None:
+    """Remove every row about the user and keep a hashed tombstone (no commit).
+
+    Shared by DELETE /api/data/{user_id} and the retention job.
+    """
     connection = session.connection()
     for table in reversed(user_tables()):
         connection.execute(delete(table).where(table.c.user_id == uid))
     connection.execute(delete(User.__table__).where(User.__table__.c.user_id == uid))
     session.merge(DeletedUser(user_hash=user_hash(uid)))
-    session.commit()
-    return Deleted()
 
 
 def _plain(row: dict[str, Any]) -> dict[str, Any]:

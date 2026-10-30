@@ -27,6 +27,17 @@ curl -X POST localhost:8000/api/events -H "Content-Type: application/json" \
 curl localhost:8000/api/data/11111111-1111-4111-8111-111111111111/export
 ```
 
+## Demo data
+
+Two simulated players ("Demo improver (simulated)", "Demo newcomer (simulated)") fill the dashboard for the demo. They go through the real pipeline, so every chart is a genuine output.
+
+```bash
+python -m scripts.seed_demo            # add them if missing
+python -m scripts.seed_demo --reset    # rebuild them with fresh dates
+```
+
+The script prints their user ids. To view one in the app, set `ai4brain.user_id` (and `ai4brain.consent_version` = `2026-10-v1`) in the browser's localStorage. Details: [`docs/data-and-ethics.md`](../docs/data-and-ethics.md) §8.
+
 ## Tests
 
 ```bash
@@ -42,7 +53,9 @@ Every test runs on a fresh in-memory database. `tests/test_contract.py` checks t
 |---|---|---|
 | `DATABASE_URL` | `sqlite:///backend/data.db` | Any SQLAlchemy URL (Postgres works too) |
 | `FRONTEND_URL` | none | Deployed frontend origin(s) for CORS, comma-separated. `localhost:5173` is always allowed |
-| `RETENTION_DAYS` | `90` | Events older than this are deleted (task 2.7) |
+| `RETENTION_DAYS` | `90` | Raw events older than this are deleted (daily job, `app/retention.py`) |
+| `INACTIVE_DAYS` | `180` | Players inactive this long are deleted with all their data (demo players excepted) |
+| `SEED_DEMO` | off | `true` loads the simulated demo players at startup (useful on a host whose disk is wiped) |
 | `ANTHROPIC_API_KEY`, `COACH_MODEL` | none | Used by the coach (Member 3) |
 
 ## Behaviour worth knowing
