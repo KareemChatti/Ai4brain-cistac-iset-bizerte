@@ -4,7 +4,7 @@
 
 **Every Tunisian knows Rami. We turned it into a coach for your mind.**
 
-A cognitive growth agent built on the Tunisian Rami card game: play against an AI opponent, get every *decision* graded (not your luck), train five thinking skills with short mini-games, and watch an uncertainty-aware **Brain Twin** of your skills evolve, explained by an AI coach that only speaks from recorded evidence.
+A cognitive growth agent built on the Tunisian Rami card game: play full matches to 401, 501, 701 or 1001 against an AI opponent with your own house rules, get warned live by a coach that only says what it can prove, get every *decision* graded (not your luck), and watch an uncertainty-aware **Brain Twin** of your skills evolve, explained by an AI coach that only speaks from recorded evidence.
 
 [![CI](https://github.com/KareemChatti/Ai4brain-cistac-iset-bizerte/actions/workflows/ci.yml/badge.svg)](https://github.com/KareemChatti/Ai4brain-cistac-iset-bizerte/actions/workflows/ci.yml)
 ![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)
@@ -45,10 +45,10 @@ Traditional cognitive tests are one-off and feel like exams. Rami is a game peop
 
 ```mermaid
 flowchart LR
-    P[Plan for today] --> M[Mini-games<br/>one skill each]
-    P --> R[Rami round<br/>vs AI opponent]
+    P[Plan for today] --> R[Rami match to 401-1001<br/>vs AI opponent]
+    R --> L[Live coach<br/>warns during the turn]
     R --> G[Turn grader<br/>scores decisions]
-    M --> E[(Events)]
+    L --> E[(Events)]
     G --> E
     E --> T[Brain Twin<br/>score ± range per skill]
     T --> C[AI coach<br/>evidence-only review]
@@ -58,23 +58,26 @@ flowchart LR
 
 | Layer | What it does |
 |---|---|
-| **A · Assessment** | Five mini-games and in-game signals become 0–100 observations. A Kalman filter per skill keeps a belief (mean ± uncertainty) that sharpens with data and drifts over time. |
+| **A · Assessment** | Signals from every Rami round become 0–100 observations for each skill. A Kalman filter per skill keeps a belief (mean ± uncertainty) that sharpens with data and drifts over time. |
 | **A · Brain Twin** | A historised profile with snapshots after every session, plus a what-if projection that always shows its range and disclaimer. |
 | **B · AI coach** | An LLM reviews each round using **only** an evidence sheet of recorded facts, cites fact ids, passes guardrails (schema, citations, blocked clinical words) and falls back to a template if the model is unavailable. |
-| **C · Adaptation** | 2-up/1-down staircases inside mini-games, an opponent level that follows wins and losses, a daily plan aimed at the weakest *or* least certain skill, and a gentle break suggestion after frustration signals. |
+| **Live coach** | During your turn the engine flags only what it can prove: a missed lay-off, a joker swap, an opening you can already make, or a discard that helps your opponent. It asks once before such a discard and never blocks the move. |
+| **C · Adaptation** | House rules you choose on the Rules tab, an opponent level that follows wins and losses, a daily plan aimed at the weakest *or* least certain skill, and a gentle break suggestion after frustration signals. |
 | **AI Collaboration Score** | 0–100 from how the player works with the hints: asking *why*, verifying, rejecting bad hints, iterating, staying autonomous and using the AI responsibly. |
 
 ## The five skills
 
-| Skill | Mini-game | In-game signal |
-|---|---|---|
-| Memory | `card_recall`: rebuild a flashed card sequence | Recall probes, discards that fed the opponent |
-| Attention | `meld_spotter`: find the one valid meld in a scrambled hand | Missed lay-offs, joker swaps and melds |
-| Speed | `quick_match`: does this card fit the meld? | Think time per available option |
-| Reasoning | `rami_puzzle`: pick the discard that gets you out fastest | Graded quality of each discard |
-| Flexibility | `rule_switch`: sort cards while the hidden rule changes | How long a stale plan is kept |
+All five skills are measured from real Rami play:
 
-Every score is shown with its 95% range, e.g. **Memory 68% ± 6**, and labelled "still learning about you" until there is enough data. Formulas: [`docs/scoring.md`](docs/scoring.md) *(planned)*.
+| Skill | In-game signal |
+|---|---|
+| Memory | Recall questions during the round, discards that fed the opponent |
+| Attention | Missed lay-offs, joker swaps and melds |
+| Speed | Think time per available option |
+| Reasoning | Graded quality of each discard |
+| Flexibility | How long a stale plan is kept |
+
+Every score is shown with its 95% range, e.g. **Memory 68% ± 6**, and labelled "still learning about you" until there is enough data. Formulas: [`docs/scoring.md`](docs/scoring.md).
 
 ## Architecture
 
@@ -82,7 +85,7 @@ Every score is shown with its 95% range, e.g. **Memory 68% ± 6**, and labelled 
 flowchart TB
     subgraph Browser["Frontend · Vite + React + TypeScript"]
         ENG[Rami engine + AI opponent<br/>Web Worker grader]
-        UI[Game table · mini-games<br/>review · dashboard]
+        UI[Game table · rules · live coach<br/>review · dashboard]
         LOG[Event logger]
         UI --> LOG
         ENG --- UI
@@ -114,27 +117,28 @@ The full API and data contract is in [`docs/contracts.md`](docs/contracts.md).
 
 ## Getting started
 
-**Requirements:** Python 3.11, Node.js 20+.
+**Requirements:** Python 3.11+, Node.js 20+.
 
-### Backend *(planned)*
-```bash
-cd backend
-python -m venv .venv
-source .venv/bin/activate        # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-cp .env.example .env             # add ANTHROPIC_API_KEY for the coach
-uvicorn app.main:app --reload    # http://localhost:8000/docs
-```
-
-### Frontend *(planned)*
-```bash
-cd frontend
-npm install
-cp .env.example .env             # VITE_API_URL, VITE_USE_MOCK
-npm run dev                      # http://localhost:5173
-```
-
-Set `VITE_USE_MOCK=true` to run the whole frontend on the sample data in [`shared/fixtures/`](shared/fixtures/), without the backend.
+### How to run
+1. **Backend** (http://localhost:8000, API docs at `/docs`):
+   ```bash
+   cd backend
+   python -m venv .venv
+   source .venv/bin/activate        # Windows: .venv\Scripts\activate
+   pip install -r requirements.txt
+   cp .env.example .env
+   uvicorn app.main:app --reload --port 8000
+   ```
+   In `backend/.env`, `ANTHROPIC_API_KEY` turns on AI-written reviews and chat, and `COACH_MODEL` picks the model. Without a key the coach still works with template reviews built from the same evidence.
+2. **Frontend** (http://localhost:5173), in a second terminal:
+   ```bash
+   cd frontend
+   npm install
+   cp .env.example .env
+   npm run dev
+   ```
+   In `frontend/.env`, `VITE_API_URL=http://localhost:8000` points at the backend. Set `VITE_USE_MOCK=false` to use it, or `VITE_USE_MOCK=true` to run the whole frontend on the sample data in [`shared/fixtures/`](shared/fixtures/) without a backend.
+3. Open http://localhost:5173, pick a nickname, then use **Rules** to choose the match target and house rules, and **Play**.
 
 ### Tests
 ```bash
@@ -180,8 +184,8 @@ Details: [`docs/data-and-ethics.md`](docs/data-and-ethics.md) *(planned)*.
 | [`docs/challenge-brief.md`](docs/challenge-brief.md) | The official CISTAC 1.0 AI4Brain brief |
 | [`docs/starter-kit.md`](docs/starter-kit.md) | How the team works and integration days |
 | [`docs/team/`](docs/team/) | Task packs per member |
-| `docs/rami-rules.md` | Full house rules *(planned)* |
-| `docs/scoring.md` | Uncertainty model and formulas *(planned)* |
+| [`docs/rami-rules.md`](docs/rami-rules.md) | Rules, matches, house rules and the live coach checks |
+| [`docs/scoring.md`](docs/scoring.md) | Uncertainty model and formulas |
 | `docs/data-and-ethics.md` | Consent, retention, deletion *(planned)* |
 
 ## License
