@@ -13,6 +13,7 @@ and the router falls back to a template review if the model is unavailable.
 import json
 import os
 import socket
+import time
 import urllib.error
 import urllib.request
 from typing import Any, TypeVar
@@ -23,7 +24,7 @@ T = TypeVar("T", bound=BaseModel)
 
 DEFAULT_MODEL = "claude-sonnet-5-5"
 DEFAULT_OLLAMA_MODEL = "qwen2.5:3b"
-DEFAULT_OLLAMA_URL = "http://localhost:11434"
+DEFAULT_OLLAMA_URL = "http://127.0.0.1:11434"
 
 
 class LLMUnavailable(Exception):
@@ -88,7 +89,15 @@ def _post(path: str, body: dict | None, timeout: float) -> dict:
         return json.loads(response.read().decode())
 
 
+# When Ollama is not running, refusing a connection costs ~2 s on Windows: remember it briefly.
+DOWN_FOR_S = 30.0
+_down_until = 0.0
+
+
 def _ollama_json(system: str, user: str, schema_model: type[T], timeout: float) -> T:
+    global _down_until
+    if time.monotonic() < _down_until:
+        raise LLMUnavailable(f"Ollama is not running at {_ollama_url()} (checked recently)")
     model = model_name()
     body = {
         "model": model,
@@ -109,8 +118,10 @@ def _ollama_json(system: str, user: str, schema_model: type[T], timeout: float) 
     except urllib.error.URLError as e:
         if isinstance(e.reason, (TimeoutError, socket.timeout)):
             raise LLMUnavailable(f"timeout after {timeout:.0f}s") from e
+        _down_until = time.monotonic() + DOWN_FOR_S
         raise LLMUnavailable(f"Ollama is not running at {_ollama_url()}") from e
 
+    _down_until = 0.0
     content = (reply.get("message") or {}).get("content", "")
     try:
         return schema_model.model_validate_json(content)

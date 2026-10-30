@@ -45,7 +45,7 @@ def generate_review(evidence: dict, language: str = "en") -> tuple[Review, list[
             )
         except LLMUnavailable as e:
             problems.append(f"attempt {attempt}: {e}")
-            if "timeout" in str(e) or "not set" in str(e) or "disabled" in str(e):
+            if any(reason in str(e) for reason in ("timeout", "not set", "disabled", "not running", "not installed")):
                 break  # retrying would not help
             continue
         candidate = {**draft.model_dump(), "round_id": evidence["round_id"], "source": "llm"}

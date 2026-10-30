@@ -212,6 +212,7 @@ def _ollama(monkeypatch, reply=None, error=None, capture=None):
         return _FakeResponse(_json.dumps(reply).encode())
 
     monkeypatch.setattr(llm.urllib.request, "urlopen", fake_urlopen)
+    monkeypatch.setattr(llm, "_down_until", 0.0)
 
 
 def _valid_draft() -> dict:
@@ -283,3 +284,12 @@ def test_review_from_ollama_with_invented_facts_is_cleaned(client, monkeypatch):
     _ollama(monkeypatch, reply={"message": {"content": _json.dumps(bad)}})
     review = client.post("/api/coach/review", json={"user_id": USER, "round_id": ROUND}).json()
     assert all("F99" not in m["fact_ids"] for m in review["key_moments"])
+
+
+def test_a_stopped_ollama_is_remembered_briefly(monkeypatch):
+    calls = []
+    _ollama(monkeypatch, error=urllib.error.URLError(ConnectionRefusedError()), capture=calls)
+    for _ in range(3):
+        with pytest.raises(llm.LLMUnavailable, match="not running"):
+            llm.complete_json("s", "u", ReviewDraft, timeout=5)
+    assert len(calls) == 1  # the next calls fail at once instead of waiting for Windows to refuse again
