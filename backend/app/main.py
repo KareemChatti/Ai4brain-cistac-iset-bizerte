@@ -1,5 +1,6 @@
 """FastAPI application: `uvicorn app.main:app --reload` from backend/."""
 
+import asyncio
 import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
@@ -10,7 +11,7 @@ from starlette.types import ASGIApp, Receive, Scope, Send
 
 from app import __version__, db
 from app.config import settings
-from app import live
+from app import demo, live, retention
 from app.routers import data, events, insights, matches, profile, users
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
@@ -20,7 +21,11 @@ log = logging.getLogger("app")
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     db.init_db()
+    if settings.seed_demo:
+        await asyncio.to_thread(demo.seed_demo)
+    cleanup = asyncio.create_task(retention.retention_loop())  # now, then once a day
     yield
+    cleanup.cancel()
 
 
 class BeaconJSONMiddleware:
