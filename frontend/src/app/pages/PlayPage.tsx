@@ -13,24 +13,24 @@ export function MatchScore() {
   if (!rules.matchTarget) return null;
   const totals = match?.totals ?? [0, 0];
   const target = match?.target ?? rules.matchTarget;
+  const round = (match?.rounds.length ?? 0) + (match?.winner ? 0 : 1);
   return (
-    <section className="card mb-4 flex flex-wrap items-center justify-between gap-3 py-3" aria-label="Match score">
+    <section className="flex flex-wrap items-end gap-x-8 gap-y-2" aria-label="Match score">
       <div>
         <p className="font-semibold">Match to {target}</p>
-        <p className="text-sm text-slate-600">
-          Round {(match?.rounds.length ?? 0) + (match?.winner ? 0 : 1)} · the first to reach {target} penalty points loses
-        </p>
+        <p className="text-sm muted">Round {round}</p>
+        <p className="text-sm muted">The first to reach {target} penalty points loses</p>
       </div>
-      <div className="flex gap-6 text-center">
+      <dl className="flex gap-6">
         <div>
-          <p className="text-sm text-slate-500">You</p>
-          <p className="text-2xl font-bold text-brand">{totals[0]}</p>
+          <dt className="text-sm muted">You</dt>
+          <dd className="figure text-3xl text-ink sm:text-figure">{totals[0]}</dd>
         </div>
-        <div>
-          <p className="text-sm text-slate-500">Opponent</p>
-          <p className="text-2xl font-bold text-slate-700">{totals[1]}</p>
+        <div className="border-l border-rule pl-6">
+          <dt className="text-sm muted">Opponent</dt>
+          <dd className="figure text-3xl text-ink-2 sm:text-figure">{totals[1]}</dd>
         </div>
-      </div>
+      </dl>
     </section>
   );
 }
@@ -52,15 +52,16 @@ export default function PlayPage() {
     return (
       <>
         <PageTitle>Match over</PageTitle>
-        <MatchScore />
-        <section className="card text-center">
-          <p className="text-xl font-bold">{match.winner === "user" ? "You won the match!" : "Your opponent won the match."}</p>
-          <p className="mt-1 text-slate-600">
-            {match.rounds.length} rounds · you {match.totals[0]}, opponent {match.totals[1]} (target {match.target})
+        <section className="card flex flex-col gap-4">
+          <h2>{match.winner === "user" ? "You won the match!" : "Your opponent won the match."}</h2>
+          <MatchScore />
+          <p className="muted">
+            {match.rounds.length} rounds, you {match.totals[0]}, opponent {match.totals[1]} (target {match.target})
           </p>
-          <div className="mt-4 flex flex-wrap justify-center gap-2">
+          <div className="flex flex-wrap gap-2">
             <button
-              className="btn-primary"
+              type="button"
+              className="btn btn-primary"
               onClick={() => {
                 newMatch();
                 setTable((n) => n + 1);
@@ -68,7 +69,7 @@ export default function PlayPage() {
             >
               New match
             </button>
-            <Link className="btn-ghost" to="/rules">
+            <Link className="btn no-underline" to="/rules">
               Change the rules
             </Link>
           </div>
@@ -79,19 +80,16 @@ export default function PlayPage() {
 
   return (
     <>
-      <PageTitle
-        sub={
-          <>
+      <div className="mb-5 flex flex-wrap items-end justify-between gap-x-10 gap-y-3 sm:mb-6">
+        <header className="flex flex-col gap-1 sm:gap-2">
+          <h1 className="text-2xl sm:text-page">Play Rami</h1>
+          <p className="max-w-[52ch] text-ink-2">
             Make melds, watch the discards, and ask for a hint when you want one.{" "}
-            <Link className="underline" to="/rules">
-              Rules
-            </Link>
-          </>
-        }
-      >
-        Play Rami
-      </PageTitle>
-      <MatchScore />
+            <Link to="/rules">Rules</Link>
+          </p>
+        </header>
+        <MatchScore />
+      </div>
       <RamiTable
         key={table}
         userId={userId!}

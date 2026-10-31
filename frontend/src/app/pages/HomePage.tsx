@@ -15,18 +15,18 @@ export default function HomePage() {
 
   return (
     <>
-      <PageTitle sub="A Rami session picked for you, with the coach watching your decisions.">Today's plan</PageTitle>
+      <PageTitle sub="A Rami session picked for you, with the coach watching your decisions.">Today’s plan</PageTitle>
       {loading && <Loading />}
       {error && <ErrorNote error={error} />}
       {plan && (
         <section className="card">
-          <p className="text-sm uppercase tracking-wide text-slate-500">Focus</p>
-          <p className="text-xl font-semibold text-brand">{DIMENSION_LABELS[plan.focus]}</p>
-          <p className="mt-2 text-slate-700">{plan.reason}</p>
+          <p className="text-sm text-muted">Focus</p>
+          <p className="text-xl font-semibold text-ink">{DIMENSION_LABELS[plan.focus]}</p>
+          <p className="mt-2 text-ink-2">{plan.reason}</p>
           <ol className="mt-5 space-y-2">
             {steps.map((_, i) => (
-              <li key={i} className="flex items-center gap-3 rounded-xl bg-slate-50 px-4 py-3">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand text-sm font-bold text-white">
+              <li key={i} className="flex items-center gap-3 rounded-xl bg-paper-2 px-4 py-3">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-ink text-sm font-bold text-paper">
                   {i + 1}
                 </span>
                 <span>Rami round against level {plan.opponent_level}</span>
@@ -34,7 +34,7 @@ export default function HomePage() {
             ))}
           </ol>
           <button
-            className="btn-primary mt-6 w-full sm:w-auto"
+            className="btn btn-primary mt-6 w-full sm:w-auto"
             onClick={() => {
               start(steps, plan.opponent_level, plan.quick_mode);
               navigate(stepPath(steps[0]));

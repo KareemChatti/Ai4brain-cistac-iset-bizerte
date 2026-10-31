@@ -1,19 +1,37 @@
-// A playing card drawn with HTML/CSS. Shared by the table and the mini-games.
+// A playing card: 5 x 7 card stock, rank and suit in two corners, the suit (or the face letter) in the middle.
+// Shared by the table and the coach panels. Styles: src/game/table.css.
 
+import type { CSSProperties } from "react";
 import { parseCard } from "../engine/cards";
 
-const SUIT_SYMBOL: Record<string, string> = { S: "♠", H: "♥", D: "♦", C: "♣" };
 const SUIT_NAME: Record<string, string> = { S: "spades", H: "hearts", D: "diamonds", C: "clubs" };
 const RANK_NAME: Record<string, string> = { A: "Ace", T: "10", J: "Jack", Q: "Queen", K: "King" };
 
-export type CardSize = "xs" | "sm" | "md" | "lg";
-
-const SIZES: Record<CardSize, string> = {
-  xs: "h-12 w-9 text-xs",
-  sm: "h-16 w-12 text-sm",
-  md: "h-24 w-[4.25rem] text-base sm:h-28 sm:w-20",
-  lg: "h-32 w-24 text-lg sm:h-36 sm:w-[6.5rem]",
+/** Suit shapes on a 100 x 100 box, drawn once so they stay crisp at every size. */
+const SUIT_PATH: Record<string, string> = {
+  H: "M50 90 C20 66 4 50 4 30 C4 15 16 5 29 5 C39 5 46 11 50 19 C54 11 61 5 71 5 C84 5 96 15 96 30 C96 50 80 66 50 90 Z",
+  D: "M50 4 L86 50 L50 96 L14 50 Z",
+  S: "M50 4 C74 26 95 40 95 60 C95 75 83 83 71 83 C62 83 56 79 53 73 C55 83 59 90 67 96 L33 96 C41 90 45 83 47 73 C44 79 38 83 29 83 C17 83 5 75 5 60 C5 40 26 26 50 4 Z",
+  C: "M50 6 A19 19 0 0 1 66 36 A19 19 0 1 1 57 66 C58 80 62 89 69 96 L31 96 C38 89 42 80 43 66 A19 19 0 1 1 34 36 A19 19 0 0 1 50 6 Z",
 };
+
+function Suit({ suit }: { suit: string }) {
+  return (
+    <svg viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+      <path d={SUIT_PATH[suit]} fill="currentColor" />
+    </svg>
+  );
+}
+
+function Star() {
+  return (
+    <svg viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+      <path d="M50 4 L62 37 L97 38 L69 59 L79 94 L50 73 L21 94 L31 59 L3 38 L38 37 Z" fill="currentColor" />
+    </svg>
+  );
+}
+
+export type CardSize = "xs" | "sm" | "md" | "lg";
 
 export function cardLabel(id: string): string {
   const card = parseCard(id);
@@ -30,6 +48,9 @@ export function CardView({
   onClick,
   disabled,
   className = "",
+  index,
+  animate,
+  style,
 }: {
   id?: string;
   size?: CardSize;
@@ -39,49 +60,59 @@ export function CardView({
   onClick?: () => void;
   disabled?: boolean;
   className?: string;
+  /** Position in a fan: staggers the deal and tilts the card. */
+  index?: number;
+  /** "deal" when the card arrives in a hand, "land" when it lands on a pile. */
+  animate?: "deal" | "land";
+  style?: CSSProperties;
 }) {
-  const ring =
-    mark === "good"
-      ? "ring-4 ring-emerald-500"
-      : mark === "bad"
-        ? "ring-4 ring-rose-500"
-        : mark === "hint"
-          ? "ring-4 ring-amber-400"
-          : mark === "target"
-            ? "ring-4 ring-brand"
-            : "";
-  const base = `${SIZES[size]} relative shrink-0 select-none rounded-lg border border-slate-300 shadow-sm transition-transform ${ring} ${
-    selected ? "-translate-y-3 border-brand shadow-md" : ""
-  } ${onClick && !disabled ? "cursor-pointer hover:-translate-y-1" : ""} ${className}`;
+  const classes = [
+    "pcard",
+    `pcard--${size}`,
+    mark ? `pcard--${mark}` : "",
+    animate ? `pcard--${animate}` : "",
+    className,
+  ];
+  const vars = { ...(index !== undefined ? { "--i": index } : {}), ...style } as CSSProperties;
 
   if (faceDown || !id) {
-    return (
-      <div className={`${base} bg-[repeating-linear-gradient(45deg,#1E5DA8_0_6px,#2B74C9_6px_12px)] border-white`} aria-label="Face-down card" />
-    );
+    return <div className={[...classes, "pcard--back"].join(" ")} style={vars} aria-label="Face-down card" role="img" />;
   }
 
   const card = parseCard(id);
+  const label = cardLabel(id);
   const Tag = onClick ? "button" : "div";
-  const props = onClick ? { type: "button" as const, onClick, disabled, "aria-pressed": selected } : {};
+  const props = onClick
+    ? { type: "button" as const, onClick, disabled, "aria-pressed": selected, "aria-label": label }
+    : { role: "img", "aria-label": label };
 
   if (card.joker) {
     return (
-      <Tag {...props} className={`${base} flex flex-col items-center justify-center bg-amber-50`} aria-label="Joker">
-        <span className="text-[1.6em] leading-none text-rose-600">★</span>
-        <span className="mt-1 text-[0.6em] font-bold tracking-wider text-slate-800">JOKER</span>
+      <Tag {...props} className={[...classes, "pcard--joker"].join(" ")} style={vars}>
+        <span className="pcard__joker">
+          <Star />
+          <span>Joker</span>
+        </span>
       </Tag>
     );
   }
 
   const red = card.suit === "H" || card.suit === "D";
-  const rank = card.rank === "T" ? "10" : card.rank;
+  const rank = card.rank === "T" ? "10" : card.rank!;
+  const face = card.rank === "J" || card.rank === "Q" || card.rank === "K";
   return (
-    <Tag {...props} className={`${base} bg-white ${red ? "text-rose-600" : "text-slate-900"}`} aria-label={cardLabel(id)}>
-      <span className="absolute left-1 top-0.5 flex flex-col items-center font-bold leading-tight">
-        <span>{rank}</span>
-        <span className="text-[0.8em]">{SUIT_SYMBOL[card.suit!]}</span>
+    <Tag {...props} className={[...classes, red ? "pcard--red" : ""].join(" ")} style={vars}>
+      <span className="pcard__corner" aria-hidden="true">
+        <span className="pcard__rank">{rank}</span>
+        <Suit suit={card.suit!} />
       </span>
-      <span className="absolute inset-0 flex items-center justify-center text-[1.9em]">{SUIT_SYMBOL[card.suit!]}</span>
+      <span className="pcard__pip" aria-hidden="true">
+        {face ? <span className="pcard__face">{rank}</span> : <Suit suit={card.suit!} />}
+      </span>
+      <span className="pcard__corner pcard__corner--end" aria-hidden="true">
+        <span className="pcard__rank">{rank}</span>
+        <Suit suit={card.suit!} />
+      </span>
     </Tag>
   );
 }

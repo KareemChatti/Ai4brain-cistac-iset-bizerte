@@ -35,24 +35,24 @@ export default function DataPage() {
       <div className="space-y-4">
         <section className="card">
           <h2 className="text-lg font-semibold">Export my data</h2>
-          <p className="mt-1 text-slate-600">Download everything we recorded as a JSON file.</p>
-          <button className="btn-ghost mt-3" onClick={download}>
+          <p className="mt-1 text-muted">Download everything we recorded as a JSON file.</p>
+          <button className="btn mt-3" onClick={download}>
             Download
           </button>
         </section>
         <section className="card">
           <h2 className="text-lg font-semibold">Delete my data</h2>
-          <p className="mt-1 text-slate-600">This removes your games, scores and coach reviews for good.</p>
+          <p className="mt-1 text-muted">This removes your games, scores and coach reviews for good.</p>
           {!confirming ? (
-            <button className="btn-ghost mt-3" onClick={() => setConfirming(true)}>
+            <button className="btn mt-3" onClick={() => setConfirming(true)}>
               Delete my data
             </button>
           ) : (
             <div className="mt-3 flex flex-wrap gap-3">
-              <button className="btn-primary" onClick={remove}>
+              <button className="btn btn-primary" onClick={remove}>
                 Yes, delete everything
               </button>
-              <button className="btn-ghost" onClick={() => setConfirming(false)}>
+              <button className="btn" onClick={() => setConfirming(false)}>
                 Cancel
               </button>
             </div>

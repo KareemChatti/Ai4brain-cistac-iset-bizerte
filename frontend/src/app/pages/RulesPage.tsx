@@ -49,12 +49,12 @@ export default function RulesPage() {
 
       <section className="card">
         <h2 className="font-semibold">Game length</h2>
-        <p className="mt-1 text-sm text-slate-600">Penalty points add up over rounds. The first player to reach the target loses.</p>
+        <p className="mt-1 text-sm text-muted">Penalty points add up over rounds. The first player to reach the target loses.</p>
         <div className="mt-3 flex flex-wrap gap-2">
           {MATCH_TARGETS.map((t) => (
             <button
               key={String(t)}
-              className={draft.matchTarget === t ? "btn-primary" : "btn-ghost"}
+              className={draft.matchTarget === t ? "btn btn-primary" : "btn"}
               onClick={() => setDraft({ ...draft, matchTarget: t })}
             >
               {t ?? "Single round"}
@@ -65,21 +65,23 @@ export default function RulesPage() {
 
       <section className="card mt-4">
         <h2 className="font-semibold">Deck</h2>
-        <div className="mt-3 flex flex-wrap gap-2">
-          <button className="btn-ghost" onClick={() => setDraft({ ...DEFAULT_RULES, matchTarget: draft.matchTarget })}>
-            Standard: 2 decks + 4 jokers, 14 cards, open at 71
+        <div className="mt-3 grid gap-2 sm:grid-cols-2">
+          <button className="btn h-auto flex-col items-start whitespace-normal py-3 text-left" onClick={() => setDraft({ ...DEFAULT_RULES, matchTarget: draft.matchTarget })}>
+            <span>Standard</span>
+            <span className="text-sm font-medium text-ink-2">2 decks + 4 jokers, 14 cards, open at 71</span>
           </button>
-          <button className="btn-ghost" onClick={() => setDraft({ ...QUICK_RULES, matchTarget: draft.matchTarget })}>
-            Quick: 1 deck + 2 jokers, 10 cards, open at 40
+          <button className="btn h-auto flex-col items-start whitespace-normal py-3 text-left" onClick={() => setDraft({ ...QUICK_RULES, matchTarget: draft.matchTarget })}>
+            <span>Quick</span>
+            <span className="text-sm font-medium text-ink-2">1 deck + 2 jokers, 10 cards, open at 40</span>
           </button>
         </div>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           {NUMBERS.map(({ key, label, min, max }) => (
-            <label key={key} className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 px-3 py-2">
+            <label key={key} className="flex items-center justify-between gap-3 rounded-xl bg-paper-2 px-3 py-2">
               <span className="text-sm">{label}</span>
               <input
                 type="number"
-                className="w-20 rounded-lg border border-slate-300 px-2 py-1 text-right"
+                className="w-20 rounded-lg border border-muted bg-card px-2 py-1 text-right"
                 min={min}
                 max={max}
                 value={draft[key]}
@@ -105,21 +107,21 @@ export default function RulesPage() {
             </label>
           ))}
         </div>
-        <p className="mt-3 text-sm text-slate-500">At most one joker per meld (fixed for now).</p>
+        <p className="mt-3 text-sm text-muted">At most one joker per meld (fixed for now).</p>
       </section>
 
       <div className="mt-6 flex flex-wrap gap-2">
         {matchRunning ? (
           <>
-            <button className="btn-primary" onClick={() => save(false)}>
+            <button className="btn btn-primary" onClick={() => save(false)}>
               Save, keep the current match score
             </button>
-            <button className="btn-ghost" onClick={() => save(true)}>
+            <button className="btn" onClick={() => save(true)}>
               Save and start a new match
             </button>
           </>
         ) : (
-          <button className="btn-primary" onClick={() => save(true)}>
+          <button className="btn btn-primary" onClick={() => save(true)}>
             Save and play
           </button>
         )}

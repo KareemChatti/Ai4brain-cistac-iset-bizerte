@@ -60,12 +60,12 @@ export default function ReviewPage() {
             <h2 className="font-semibold">Next focus: {DIMENSION_LABELS[review.next_focus.dimension]}</h2>
             <p className="mt-1">{review.next_focus.text}</p>
           </section>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-muted">
             {review.source === "llm" ? "Written by an AI coach from the facts above; it can be wrong." : "Written from the recorded facts of your round."}
           </p>
           {inPlan && (
-            <button className="btn-primary" onClick={() => navigate(nextStepPath() ?? "/dashboard")}>
-              Continue today's plan
+            <button className="btn btn-primary" onClick={() => navigate(nextStepPath() ?? "/dashboard")}>
+              Continue today’s plan
             </button>
           )}
           {!inPlan && match && (
@@ -73,7 +73,7 @@ export default function ReviewPage() {
               <p className="font-semibold">
                 Match to {match.target}: you {match.totals[0]}, opponent {match.totals[1]}
               </p>
-              <button className="btn-primary mt-3" onClick={() => navigate("/play")}>
+              <button className="btn btn-primary mt-3" onClick={() => navigate("/play")}>
                 {match.winner ? "See the match result" : "Next round"}
               </button>
             </section>
@@ -89,12 +89,12 @@ function Moment({ moment, facts, roundId }: { moment: Review["key_moments"][numb
   const [showTip, setShowTip] = useState(false);
   return (
     <article className="card">
-      <p className="text-sm text-slate-500">Turn {moment.turn_no}</p>
-      <h2 className="text-lg font-semibold text-brand">{moment.title}</h2>
+      <p className="text-sm text-muted">Turn {moment.turn_no}</p>
+      <h2 className="text-lg font-semibold text-ink">{moment.title}</h2>
       <p className="mt-1">{moment.explanation}</p>
       <div className="mt-3 flex flex-wrap gap-2">
         <button
-          className="btn-ghost px-3 py-1 text-sm"
+          className="btn px-3 py-1 text-sm"
           aria-expanded={showTip}
           onClick={() => {
             if (!showTip) logEvent("coach", "better_move_revealed", { turn_no: moment.turn_no }, roundId);
@@ -103,25 +103,25 @@ function Moment({ moment, facts, roundId }: { moment: Review["key_moments"][numb
         >
           {showTip ? "Hide the better move" : "Show the better move"}
         </button>
-        <button className="btn-ghost px-3 py-1 text-sm" aria-expanded={showEvidence} onClick={() => setShowEvidence(!showEvidence)}>
+        <button className="btn px-3 py-1 text-sm" aria-expanded={showEvidence} onClick={() => setShowEvidence(!showEvidence)}>
           {showEvidence ? "Hide the evidence" : "See the evidence"}
         </button>
       </div>
-      {showTip && <p className="mt-3 rounded-lg bg-brand-light px-3 py-2">{moment.tip}</p>}
+      {showTip && <p className="mt-3 rounded-lg bg-paper-2 px-3 py-2">{moment.tip}</p>}
       {showEvidence && (
-        <div className="mt-3 rounded-lg border border-slate-200 p-3">
-          <p className="text-sm font-semibold text-slate-600">What was recorded</p>
+        <div className="mt-3 rounded-lg border border-rule p-3">
+          <p className="text-sm font-semibold text-muted">What was recorded</p>
           {facts.length ? (
             <ul className="mt-1 space-y-1">
               {facts.map((f) => (
                 <li key={f.id}>
-                  <span className="mr-2 rounded bg-slate-100 px-1.5 text-xs text-slate-500">{f.id}</span>
+                  <span className="mr-2 rounded bg-paper-2 px-1.5 text-xs text-muted">{f.id}</span>
                   {f.text}
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="mt-1 text-slate-600">The facts for this moment are not available right now.</p>
+            <p className="mt-1 text-muted">The facts for this moment are not available right now.</p>
           )}
         </div>
       )}
@@ -147,7 +147,7 @@ function ReadAloud({ review }: { review: Review }) {
     setSpeaking(true);
   };
   return (
-    <button className="btn-ghost px-3 py-1 text-sm" onClick={toggle}>
+    <button className="btn px-3 py-1 text-sm" onClick={toggle}>
       {speaking ? "Stop reading" : "Read aloud"}
     </button>
   );

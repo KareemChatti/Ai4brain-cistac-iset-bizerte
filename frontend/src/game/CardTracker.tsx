@@ -10,21 +10,25 @@ export function CardTracker({ game, onClose }: { game: GameState; onClose: () =>
     ["You discarded", game.discarded[0]],
   ];
   return (
-    <div className="card" role="dialog" aria-label="Card tracker">
-      <div className="flex items-center justify-between">
-        <p className="font-semibold">Card tracker</p>
-        <button className="btn-ghost px-3 py-1 text-sm" onClick={onClose}>
+    <section className="well flex flex-col gap-3" role="dialog" aria-label="Card tracker">
+      <div className="flex items-center justify-between gap-2">
+        <h3 className="text-base">Card tracker</h3>
+        <button type="button" className="btn btn-quiet btn-sm" onClick={onClose}>
           Close
         </button>
       </div>
       {rows.map(([title, ids]) => (
-        <div key={title} className="mt-3">
-          <p className="text-sm text-slate-600">{title}</p>
+        <div key={title}>
+          <p className="text-sm muted">{title}</p>
           <div className="mt-1 flex flex-wrap gap-1">
-            {ids.length ? ids.map((id, i) => <CardView key={`${id}-${i}`} id={id} size="xs" />) : <span className="text-sm text-slate-400">nothing yet</span>}
+            {ids.length ? (
+              ids.map((id, i) => <CardView key={`${id}-${i}`} id={id} size="xs" />)
+            ) : (
+              <span className="text-sm muted">Nothing yet</span>
+            )}
           </div>
         </div>
       ))}
-    </div>
+    </section>
   );
 }

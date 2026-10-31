@@ -58,8 +58,8 @@ export default function WelcomePage() {
 
   return (
     <main className="mx-auto max-w-xl px-4 py-10">
-      <h1 className="text-3xl font-bold text-brand">Welcome to AI4Brain Rami</h1>
-      <div className="mt-4 space-y-2 text-lg text-slate-700">
+      <h1 className="text-3xl font-bold text-ink">Welcome to AI4Brain Rami</h1>
+      <div className="mt-4 space-y-2 text-lg text-ink-2">
         <p>Play Rami against the computer and get a coach that explains your decisions.</p>
         <p>
           Play whole matches to 401, 501, 701 or 1001 with your own house rules (the Rules tab). During your turn the
@@ -74,7 +74,7 @@ export default function WelcomePage() {
             <span className="font-semibold">Your nickname</span>
             <input
               type="text"
-              className="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-lg focus:border-brand focus:outline-none"
+              className="field mt-1 text-lg"
               placeholder="e.g. RamiFan"
               maxLength={32}
               autoComplete="off"
@@ -84,13 +84,13 @@ export default function WelcomePage() {
                 setError(null);
               }}
             />
-            <span className="mt-1 block text-sm text-slate-500">
+            <span className="mt-1 block text-sm text-muted">
               Just a nickname: no real name, email or phone number.
             </span>
           </label>
         )}
         <p>
-          We record your moves, timings, the coach's warnings and how you use the coach's hints. We never record your
+          We record your moves, timings, the coach’s warnings and how you use the coach’s hints. We never record your
           camera, microphone, name or contact details. The coach is an AI and can be wrong. You can export or delete
           everything at any time.
         </p>
@@ -108,12 +108,12 @@ export default function WelcomePage() {
           <span>Use my anonymised data to improve the app (optional)</span>
         </label>
         {error && (
-          <p className="rounded-xl bg-rose-50 p-3 text-rose-700" role="alert">
+          <p className="rounded-xl bg-paper-2 p-3 text-error" role="alert">
             {error}
           </p>
         )}
-        <button className="btn-primary w-full" disabled={!agree || busy || (!userId && !nickname.trim())} onClick={submit}>
-          Let's play
+        <button className="btn btn-primary w-full" disabled={!agree || busy || (!userId && !nickname.trim())} onClick={submit}>
+          Let’s play
         </button>
       </section>
     </main>

@@ -1,0 +1,145 @@
+/* Hallmark · theme: Hum · imported by src/index.css, which holds the full stamp */
+/* The Rami table: playing cards, the hand fan, the mat and the coach drawer. Tokens only (src/tokens.css). */
+
+/* ---------- playing cards: 5 x 7 card stock, rank and suit in the corners ---------- */
+.pcard {
+  --w: var(--card-w, 4.75rem);
+  position: relative; flex: none; display: block;
+  width: var(--w); aspect-ratio: 5 / 7; padding: 0; border: 0;
+  border-radius: calc(var(--w) * 0.1);
+  background: var(--grain), var(--color-card);
+  color: var(--color-suit-black);
+  box-shadow: 0 0 0 1px var(--color-edge), 0 1px 0 1px var(--color-edge), 0 8px 14px -10px var(--color-scrim);
+  translate: 0 var(--lift, 0px);
+  rotate: var(--rot, 0deg);
+  transform-origin: 50% 120%;
+  transition: translate var(--dur-short) var(--ease-snap), box-shadow var(--dur-short) var(--ease-snap), opacity var(--dur-short) var(--ease-snap);
+  font-family: var(--font-display); text-align: left; user-select: none;
+}
+.pcard--xs { --w: 2.25rem; }
+.pcard--sm { --w: 3.25rem; }
+.pcard--md { --w: var(--card-w, 4.75rem); }
+.pcard--lg { --w: 6.25rem; }
+.pcard--red { color: var(--color-suit-red); }
+
+.pcard__corner { position: absolute; top: 5%; left: 7%; display: flex; flex-direction: column; align-items: center; gap: calc(var(--w) * 0.02); line-height: 1; }
+.pcard__corner--end { top: auto; left: auto; bottom: 5%; right: 7%; rotate: 180deg; }
+.pcard__rank { font-size: max(0.75rem, calc(var(--w) * 0.24)); font-weight: 600; letter-spacing: -0.04em; }
+.pcard__corner svg { width: max(0.55rem, calc(var(--w) * 0.15)); height: auto; }
+.pcard__pip { position: absolute; inset: 0; display: grid; place-items: center; }
+.pcard__pip svg { width: calc(var(--w) * 0.42); height: auto; }
+.pcard__face { font-size: calc(var(--w) * 0.5); font-weight: 600; letter-spacing: -0.04em; line-height: 1; }
+.pcard--xs .pcard__corner--end, .pcard--sm .pcard__corner--end { display: none; }
+.pcard--xs .pcard__pip { inset: 40% 0 0 0; }
+.pcard--xs .pcard__pip svg { width: calc(var(--w) * 0.38); }
+.pcard--xs .pcard__face { font-size: calc(var(--w) * 0.36); }
+
+.pcard--joker { background: var(--grain), var(--color-paper-2); color: var(--color-suit-red); }
+.pcard__joker { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: calc(var(--w) * 0.06); }
+.pcard__joker svg { width: calc(var(--w) * 0.44); height: auto; }
+.pcard__joker span { font-size: max(0.7rem, calc(var(--w) * 0.16)); font-weight: 600; color: var(--color-ink); }
+.pcard--xs .pcard__joker span, .pcard--sm .pcard__joker span { display: none; }
+
+.pcard--back {
+  background:
+    repeating-linear-gradient(45deg, var(--color-back) 0 calc(var(--w) * 0.06), var(--color-back-2) calc(var(--w) * 0.06) calc(var(--w) * 0.12));
+  box-shadow: inset 0 0 0 calc(var(--w) * 0.06) var(--color-card), 0 0 0 1px var(--color-edge), 0 8px 14px -10px var(--color-scrim);
+}
+
+/* states: hover lifts, chosen lifts higher with an ink ring, a hint is a dashed blue ring */
+button.pcard { cursor: pointer; }
+button.pcard:hover:not(:disabled) { --lift: -8px; }
+button.pcard:active:not(:disabled) { --lift: -2px; }
+button.pcard:disabled { cursor: not-allowed; opacity: 0.55; }
+.pcard[aria-pressed="true"] { --lift: -22px; box-shadow: 0 0 0 3px var(--color-ink), 0 14px 18px -10px var(--color-scrim); }
+.pcard[aria-pressed="true"]:hover { --lift: -24px; }
+.pcard:focus-visible { outline: 3px solid var(--color-focus); outline-offset: 3px; z-index: var(--z-raised); }
+.pcard--hint { outline: 3px dashed var(--color-accent-2); outline-offset: 3px; }
+.pcard--target { box-shadow: 0 0 0 3px var(--color-mint-deep), 0 8px 14px -10px var(--color-scrim); }
+.pcard--good { box-shadow: 0 0 0 3px var(--color-mint-deep); }
+.pcard--bad { box-shadow: 0 0 0 3px var(--color-suit-red); }
+.pcard--ghost { opacity: 0.35; }
+
+/* motion: cards deal in once, a discard lands on its pile */
+.pcard--deal { animation: pcard-deal var(--dur-long) var(--ease-snap) both; animation-delay: calc(var(--i, 0) * 30ms); }
+.pcard--land { animation: pcard-land var(--dur-long) var(--ease-snap) both; }
+@keyframes pcard-deal { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+@keyframes pcard-land { from { opacity: 0; transform: translate(-22px, -16px) rotate(-8deg); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .pcard, .pcard--deal, .pcard--land { animation: none; transition: none; }
+}
+
+/* ---------- the hand: one fanned row that overlaps to fit its tray ---------- */
+.hand {
+  --card-w: clamp(3.6rem, 2.4rem + 3.6vw, 6rem);
+  container-type: inline-size;
+  display: flex; justify-content: center; align-items: flex-end;
+  padding: var(--space-xl) var(--space-xs) var(--space-xs);
+  min-height: calc(var(--card-w) * 1.4 + var(--space-xl) + var(--space-xs));
+}
+.hand > .pcard { --rot: calc((var(--i) - (var(--n) - 1) / 2) * 1.1deg); }
+.hand > .pcard + .pcard { margin-inline-start: min(var(--space-2xs), calc((100cqi - var(--n) * var(--card-w)) / max(var(--n) - 1, 1))); }
+.hand > .pcard:hover, .hand > .pcard:focus-visible, .hand > .pcard[aria-pressed="true"] { z-index: var(--z-raised); }
+
+/* the opponent's backs and the table's melds overlap the same way, tighter */
+.fan { display: flex; }
+.fan > .pcard + .pcard { margin-inline-start: calc(var(--w) * -0.62); }
+.fan--loose > .pcard + .pcard { margin-inline-start: calc(var(--w) * -0.5); }
+
+/* ---------- the mat: blue sugar paper under the melds and the piles ---------- */
+.mat {
+  position: relative;
+  border-radius: var(--radius-card);
+  background: var(--grain), var(--fibre), var(--color-mat);
+  box-shadow: inset 0 0 0 1px var(--color-mat-2), var(--shadow-card);
+  color: var(--color-mat-ink);
+}
+.meld { border-radius: var(--radius-stock); padding: var(--space-xs); transition: background-color var(--dur-short) var(--ease-snap); }
+.meld--target { background: color-mix(in oklab, var(--color-mint) 45%, transparent); }
+.pile { display: flex; flex-direction: column; align-items: center; gap: var(--space-xs); }
+.pile__empty {
+  width: var(--w, 4.75rem); aspect-ratio: 5 / 7; border-radius: calc(var(--w, 4.75rem) * 0.1);
+  border: 2px dashed var(--color-mat-ink); opacity: 0.6;
+  display: grid; place-items: center; font-size: var(--text-xs); color: var(--color-mat-ink);
+}
+
+/* ---------- the tray holding the hand and the turn's actions ---------- */
+.tray { border-radius: var(--radius-card); background: var(--grain), var(--fibre), var(--color-paper-2); box-shadow: inset 0 1px 0 var(--color-fringe); }
+.turn-pill { display: inline-flex; align-items: center; gap: var(--space-xs); min-height: 32px; padding: 0 var(--space-sm); border-radius: var(--radius-pill); font-size: var(--text-sm); font-weight: 600; background: var(--color-ink); color: var(--color-paper); }
+.turn-pill--wait { background: var(--color-paper-3); color: var(--color-ink-2); }
+
+/* ---------- coach: a drawer beside the table, a bottom sheet on phones ---------- */
+.coach-drawer { display: flex; flex-direction: column; gap: var(--space-md); min-width: 0; }
+@media (max-width: 63.99rem) {
+  .coach-drawer {
+    position: fixed; inset: auto 0 0 0; z-index: var(--z-modal);
+    max-height: 78dvh; overflow-y: auto; overscroll-behavior: contain;
+    padding: var(--space-md) var(--space-md) var(--space-xl);
+    border-radius: var(--radius-card) var(--radius-card) 0 0;
+    background: var(--grain), var(--color-paper);
+    box-shadow: 0 -12px 28px -14px var(--color-scrim);
+    transform: translateY(105%); visibility: hidden;
+    transition: transform var(--dur-long) var(--ease-snap), visibility 0s linear var(--dur-long);
+  }
+  .coach-drawer[data-open="true"] { transform: none; visibility: visible; transition: transform var(--dur-long) var(--ease-snap); }
+  .coach-scrim { position: fixed; inset: 0; z-index: calc(var(--z-modal) - 1); background: var(--color-scrim); border: 0; }
+}
+@media (min-width: 64rem) { .coach-scrim { display: none; } }
+
+/* ---------- memory question: a dialog over the table ---------- */
+.probe-backdrop { position: fixed; inset: 0; z-index: var(--z-modal); display: grid; place-items: center; padding: var(--space-md); background: var(--color-scrim); }
+
+/* the piles are buttons around a card: the card carries the shape, the button the focus ring */
+.pile__button { padding: 0; border: 0; background: none; border-radius: calc(4.75rem * 0.1); cursor: pointer; }
+.pile__button:disabled { cursor: not-allowed; }
+.pile__button:focus-visible { outline: 3px solid var(--color-focus); outline-offset: 3px; }
+
+/* phones: the opponent's backs shrink so name and fan share a row */
+@media (max-width: 40rem) {
+  .fan--opponent > .pcard { --w: 2.25rem; }
+  .fan--opponent > .pcard + .pcard { margin-inline-start: calc(var(--w) * -0.7); }
+}
+
+/* a row that scrolls sideways (the main nav on a phone) without a painted scrollbar */
+.scroll-row { scrollbar-width: none; }
+.scroll-row::-webkit-scrollbar { display: none; }

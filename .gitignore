@@ -47,3 +47,5 @@ desktop.ini
 # Deployment
 .vercel/
 .netlify/
+
+.hallmark/
