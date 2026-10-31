@@ -137,6 +137,9 @@ function ReadAloud({ review }: { review: Review }) {
       return;
     }
     const utterance = new SpeechSynthesisUtterance(review.voice_text || review.headline);
+    const local = synth.getVoices().filter((v) => v.localService);
+    const voice = local.find((v) => v.lang.startsWith("en")) ?? local[0];
+    if (voice) utterance.voice = voice;
     utterance.onend = () => setSpeaking(false);
     synth.cancel();
     synth.speak(utterance);
