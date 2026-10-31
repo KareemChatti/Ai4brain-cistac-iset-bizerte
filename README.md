@@ -109,6 +109,7 @@ flowchart TB
 | Game engine | Pure TypeScript, grading in a Web Worker |
 | Backend | Python 3.11, FastAPI, SQLModel + SQLite, Pydantic v2, numpy, pytest |
 | Coach model | A local model through [Ollama](https://ollama.com) by default (`qwen2.5:3b`), or Claude through the Anthropic SDK when a key is set; a template fallback when neither is available |
+| Voice (bonus) | Round reviews read aloud with the browser Web Speech API |
 
 The shared data contract in code is [`shared/types.ts`](shared/types.ts), with sample payloads in [`shared/fixtures/`](shared/fixtures/).
 
