@@ -139,7 +139,7 @@ The shared data contract in code is [`shared/types.ts`](shared/types.ts), with s
    cp .env.example .env
    npm run dev
    ```
-   `VITE_API_URL=http://localhost:8000` points at the backend. Set `VITE_USE_MOCK=false` to use it, or keep `VITE_USE_MOCK=true` to run the whole frontend on the sample data in [`shared/fixtures/`](shared/fixtures/) without a backend.
+   `VITE_API_URL=http://localhost:8000` points at the backend and `VITE_USE_MOCK=false` uses it. To try the frontend without a backend, set `VITE_USE_MOCK=true`: it then runs on the sample data in [`shared/fixtures/`](shared/fixtures/).
 4. Open http://localhost:5173, pick a nickname, then use **Rules** to choose the match target and house rules, and **Play**.
 
 ### Backend settings (`backend/.env`)
