@@ -1,19 +1,12 @@
-// Melds: validity, layout, value, and the best way to split a hand into melds.
-//   set = 3-4 cards of one rank, all different suits
-//   run = 3+ consecutive cards of one suit; ace low (A-2-3) or high (Q-K-A), no wrap (K-A-2)
-//   at most one joker per meld
-
 import { Card, SUITS, Suit, meldRankPoints, penaltyPoints, rankFromValue, rankValue } from "./cards";
 
 export type MeldKind = "set" | "run";
 
-/** House rules that change which runs are valid. Set from the round's config by newGame and the grader. */
 const meldRules = { aceHigh: true };
 export function setMeldRules(rules: { aceHigh: boolean }) {
   meldRules.aceHigh = rules.aceHigh;
 }
 
-/** One position in a laid-out meld. For runs `value` is 1..14 (14 = high ace). */
 export type Slot = { card: Card; value: number };
 
 export function setLayout(cards: Card[]): Slot[] | null {
@@ -24,7 +17,7 @@ export function setLayout(cards: Card[]): Slot[] | null {
   const rank = reals[0].rank!;
   if (reals.some((c) => c.rank !== rank)) return null;
   if (new Set(reals.map((c) => c.suit)).size !== reals.length) return null;
-  const value = rankValue(rank) === 1 ? 14 : rankValue(rank); // an ace in a set counts 11
+  const value = rankValue(rank) === 1 ? 14 : rankValue(rank);
   return cards.map((card) => ({ card, value }));
 }
 
@@ -53,7 +46,7 @@ export function runLayout(cards: Card[]): Slot[] | null {
       if (missing === 1) {
         jokerValue = values.find((v, i) => values[i + 1] !== undefined && values[i + 1] !== v + 1)! + 1;
       } else if (max < 14 && max - min < 12) {
-        jokerValue = max + 1; // extend at the top: worth more for opening
+        jokerValue = max + 1;
       } else if (min > 1) {
         jokerValue = min - 1;
       } else continue;
@@ -79,19 +72,16 @@ export function layout(cards: Card[]): Slot[] | null {
   return setLayout(cards) ?? runLayout(cards);
 }
 
-/** Points of a meld for the opening: numbers face value, J/Q/K 10, ace 11 (1 in A-2-3), joker = card it replaces. */
 export function meldValue(cards: Card[]): number {
   const slots = layout(cards);
   if (!slots) return 0;
   return slots.reduce((sum, s) => sum + meldRankPoints(s.value), 0);
 }
 
-/** Cards of a meld in display order (runs sorted, joker in its place). */
 export function orderMeld(cards: Card[]): Card[] {
   return layout(cards)?.map((s) => s.card) ?? cards;
 }
 
-/** Which real cards could replace the joker of a table meld ("TS" style codes). */
 export function jokerStandsFor(cards: Card[]): string[] {
   const set = setLayout(cards);
   if (set) {
@@ -115,19 +105,15 @@ export function canLayOff(card: Card, meld: Card[]): boolean {
   return kind === "set" ? isValidSet(combined) : isValidRun(combined);
 }
 
-// ---------------------------------------------------------------------------
-// Best partition of a hand into melds (backtracking over bitmasks, memoised).
-
 export type Partition = {
   melds: Card[][];
   deadwood: Card[];
-  deadwoodPoints: number; // penalty value of the cards left over
-  meldPoints: number; // opening value of the melds
+  deadwoodPoints: number;
+  meldPoints: number;
 };
 
 type Candidate = { mask: number; points: number };
 
-/** Every valid meld that can be built from `cards`, as bitmasks over the array. */
 function candidateMelds(cards: Card[]): Candidate[] {
   const jokers: number[] = [];
   const byRank = new Map<number, Map<Suit, number[]>>();
@@ -150,7 +136,6 @@ function candidateMelds(cards: Card[]): Candidate[] {
     for (const i of indices) mask |= 1 << i;
     masks.add(mask);
   };
-  // Cartesian product of copy choices (two decks: the same card may exist twice).
   const product = (groups: number[][]): number[][] =>
     groups.reduce<number[][]>((acc, group) => acc.flatMap((combo) => group.map((i) => [...combo, i])), [[]]);
 
@@ -194,12 +179,7 @@ function candidateMelds(cards: Card[]): Candidate[] {
   return result;
 }
 
-/**
- * Split `hand` into melds. Mode "deadwood" minimises the penalty points left over
- * (then the number of cards left); mode "opening" maximises the meld points.
- */
 export function findMelds(hand: Card[], mode: "deadwood" | "opening" = "deadwood"): Partition {
-  // Jokers last, so the lowest unused card of any state is a real card while one remains.
   const cards = [...hand.filter((c) => !c.joker), ...hand.filter((c) => c.joker)];
   const n = cards.length;
   const candidates = candidateMelds(cards);
@@ -210,7 +190,7 @@ export function findMelds(hand: Card[], mode: "deadwood" | "opening" = "deadwood
     mode === "deadwood" ? penaltyPoints(cards[i]) * 100 + 1 : penaltyPoints(cards[i]) * 0.001;
   const meldCost = (c: Candidate) => (mode === "deadwood" ? -c.points * 0.0001 : -c.points);
 
-  const memo = new Map<number, [number, number]>(); // mask -> [cost, chosen meld mask or -1]
+  const memo = new Map<number, [number, number]>();
   const solve = (mask: number): number => {
     if (mask === 0) return 0;
     const hit = memo.get(mask);
@@ -255,7 +235,6 @@ export function findMelds(hand: Card[], mode: "deadwood" | "opening" = "deadwood
   };
 }
 
-/** Every meld from `hand` that contains `card` (used to check a taken discard can be played). */
 export function meldsContaining(hand: Card[], card: Card): Card[][] {
   const cards = [card, ...hand.filter((c) => c.id !== card.id)];
   return candidateMelds(cards)
@@ -263,7 +242,6 @@ export function meldsContaining(hand: Card[], card: Card): Card[][] {
     .map((c) => orderMeld(cards.filter((_, i) => c.mask & (1 << i))));
 }
 
-/** A card that is one card away from a meld: a pair of the same rank, or same suit within two ranks. */
 export function isNearMeld(card: Card, hand: Card[]): boolean {
   if (card.joker) return true;
   return hand.some((other) => {

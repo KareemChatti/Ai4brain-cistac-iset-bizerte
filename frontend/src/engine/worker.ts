@@ -1,6 +1,3 @@
-// Web Worker: grades every user turn of a finished round off the main thread and posts
-// the results back one by one. Message in: { id, items: GradeJob[] }.
-
 import { GradeInput, TurnGrade, gradeTurn } from "./grader";
 
 export type GradeJob = { turnNo: number; input: GradeInput; played: string };

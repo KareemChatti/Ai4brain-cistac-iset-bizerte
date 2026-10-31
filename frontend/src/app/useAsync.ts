@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 
 export type AsyncState<T> = { data: T | null; error: Error | null; loading: boolean };
 
-/** Runs `load` whenever `deps` change and keeps the latest result. */
 export function useAsync<T>(load: () => Promise<T>, deps: unknown[]): AsyncState<T> {
   const [state, setState] = useState<AsyncState<T>>({ data: null, error: null, loading: true });
   useEffect(() => {

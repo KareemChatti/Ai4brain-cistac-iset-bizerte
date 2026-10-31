@@ -1,4 +1,3 @@
-# Coach dependencies. Member 2: please merge these into backend/requirements.txt.
 anthropic>=2.1,<3
 fastapi>=0.110
 pydantic>=2.6

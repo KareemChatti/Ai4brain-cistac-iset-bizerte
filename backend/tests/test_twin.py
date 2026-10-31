@@ -1,5 +1,3 @@
-"""The Kalman belief and the replay, without a database."""
-
 import math
 from datetime import UTC, datetime, timedelta
 

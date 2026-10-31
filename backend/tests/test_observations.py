@@ -1,5 +1,3 @@
-"""Events -> 0-100 observations, one formula per dimension (docs/scoring.md)."""
-
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from typing import Any
@@ -36,7 +34,6 @@ def trial(game, correct=True, **extra):
     return Ev("trial", {"game": game, "correct": correct, "extra": extra})
 
 
-# ---------- mini-games ----------
 def test_card_recall_uses_the_longest_correct_span():
     o = minigame_observation(end("card_recall", level_end=6), [trial("card_recall", span=5),
                                                                 trial("card_recall", False, span=7)])
@@ -66,7 +63,7 @@ def test_quick_match_correct_per_minute():
     o = minigame_observation(end("quick_match"), trials)
 
     assert o.dimension == "speed"
-    assert o.value == pytest.approx(24 / 0.75 / 40 * 100)  # 32 per minute -> 80
+    assert o.value == pytest.approx(24 / 0.75 / 40 * 100)
 
 
 def test_rami_puzzle():
@@ -115,7 +112,6 @@ def test_each_end_takes_only_its_own_trials():
     assert [round(o.value, 1) for o in observations] == [round(2 / 7 * 100, 1), round(6 / 7 * 100, 1)]
 
 
-# ---------- rounds ----------
 def fixture_round_events():
     events = load_fixture("events-round.json")["events"]
     return [
@@ -129,15 +125,10 @@ def test_fixture_round_gives_all_five_dimensions():
 
     assert set(observations) == {"memory", "attention", "speed", "reasoning", "flexibility"}
     assert all(o.noise == R_ROUND and o.kind == "round" for o in observations.values())
-    # recall probe wrong (0%) and one discard fed the opponent: 0 - 10, clamped to 0
     assert observations["memory"].value == 0
-    # one missed lay-off, nothing used
     assert observations["attention"].value == 0
-    # median think time per option = 4100 / 9 ms
     assert observations["speed"].value == pytest.approx(100 * (1 - (4100 / 9 - 300) / 1500))
-    # one graded turn, quality 0.31
     assert observations["reasoning"].value == pytest.approx(31)
-    # one plan switch after waiting 1 turn
     assert observations["flexibility"].value == pytest.approx(80)
 
 

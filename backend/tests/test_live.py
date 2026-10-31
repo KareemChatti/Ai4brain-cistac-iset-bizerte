@@ -1,5 +1,3 @@
-"""The live session WebSocket, the match history and live alerts in the collab score."""
-
 import uuid
 
 import pytest
@@ -62,7 +60,7 @@ def test_a_finished_round_pushes_a_summary_and_the_profile(client, batch):
         messages = receive_until(s, "profile")
     kinds = [m.get("kind") for m in messages if m["type"] == "coach"]
     assert "round_summary" in kinds
-    assert "fed_opponent" in kinds  # turn 7 of the fixture fed the opponent
+    assert "fed_opponent" in kinds
     summary = next(m for m in messages if m.get("kind") == "round_summary")
     assert "Brain Twin" in summary["text"]
     profile = messages[-1]["profile"]
@@ -110,7 +108,6 @@ def test_no_origin_is_allowed_for_non_browser_clients(client):
         assert s.receive_json()["type"] == "hello"
 
 
-# ---------------- coach messages (pure) ----------------
 def ev(type_: str, payload: dict, ts: str = "2026-10-29T10:00:00Z", round_id: str | None = ROUND) -> EventIn:
     return EventIn.model_validate(make_event(type=type_, source="rami", payload=payload, ts=ts, round_id=round_id))
 
@@ -134,7 +131,7 @@ def test_ignoring_the_same_alert_twice_gets_a_nudge():
 
 
 def test_coach_texts_stay_non_clinical():
-    from app.coach.guardrails import find_blocked  # the coach's blocked-word list
+    from app.coach.guardrails import find_blocked
 
     events = [
         ev("round_start", {}), ev("turn", {"turn_no": 1, "think_ms": 100, "fed_opponent": True, "discarded": "8H.1"}),
@@ -145,7 +142,6 @@ def test_coach_texts_stay_non_clinical():
         assert not find_blocked(m["text"]), m["text"]
 
 
-# ---------------- matches ----------------
 def match_events(user_id: str) -> list[dict]:
     mid = str(uuid.uuid4())
     r1, r2 = str(uuid.uuid4()), str(uuid.uuid4())
@@ -185,7 +181,6 @@ def test_matches_of_unknown_user_is_404(client):
     assert client.get(f"/api/matches/{uuid.uuid4()}").status_code == 404
 
 
-# ---------------- collab ----------------
 def test_followed_live_alerts_count_as_verification():
     alerts = [ev("coach_alert", {"kind": "missed_lay_off", "turn_no": i, "cards": ["5S"], "followed": f})
               for i, f in enumerate([True, True, True, False])]

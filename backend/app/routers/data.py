@@ -1,9 +1,3 @@
-"""GET /api/data/{user_id}/export and DELETE /api/data/{user_id}.
-
-Both work on every table that has a `user_id` column, so tables added later
-(including the coach's) are exported and deleted without changing this file.
-"""
-
 from datetime import datetime
 from typing import Any
 from uuid import UUID
@@ -23,7 +17,6 @@ router = APIRouter(prefix="/api/data", tags=["data"])
 
 
 def user_tables() -> list[Table]:
-    """Tables holding a user's data, parents before children (users itself excluded)."""
     return [
         table for table in SQLModel.metadata.sorted_tables
         if "user_id" in table.c and table.name != User.__tablename__
@@ -32,7 +25,6 @@ def user_tables() -> list[Table]:
 
 @router.get("/{user_id}/export")
 def export_data(user_id: UUID, session: Session = Depends(get_session)) -> JSONResponse:
-    """Everything stored about the user, as one JSON document."""
     uid = str(user_id)
     user = session.get(User, uid)
     if user is None:
@@ -52,17 +44,12 @@ def export_data(user_id: UUID, session: Session = Depends(get_session)) -> JSONR
 
 @router.delete("/{user_id}", response_model=Deleted)
 def delete_data(user_id: UUID, session: Session = Depends(get_session)) -> Deleted:
-    """Delete every row about the user. Safe to call twice."""
     delete_user_data(session, str(user_id))
     session.commit()
     return Deleted()
 
 
 def delete_user_data(session: Session, uid: str) -> None:
-    """Remove every row about the user and keep a hashed tombstone (no commit).
-
-    Shared by DELETE /api/data/{user_id} and the retention job.
-    """
     connection = session.connection()
     for table in reversed(user_tables()):
         connection.execute(delete(table).where(table.c.user_id == uid))

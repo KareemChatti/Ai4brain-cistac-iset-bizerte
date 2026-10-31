@@ -1,5 +1,3 @@
-"""Time helpers. Every datetime is timezone-aware UTC; the API speaks ISO 8601 with "Z"."""
-
 from datetime import UTC, datetime
 
 
@@ -8,7 +6,6 @@ def utcnow() -> datetime:
 
 
 def to_utc(value: datetime) -> datetime:
-    """Aware UTC datetime. A naive value is assumed to be UTC already."""
     if value.tzinfo is None:
         return value.replace(tzinfo=UTC)
     return value.astimezone(UTC)

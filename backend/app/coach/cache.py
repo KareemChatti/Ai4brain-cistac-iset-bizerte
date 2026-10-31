@@ -1,9 +1,3 @@
-"""Caches LLM reviews per round so a refresh doesn't pay again.
-
-Uses a CoachReview table in Member 2's database when app.db is there, otherwise memory.
-Template reviews are not cached: they are free, and the LLM may be back next time.
-"""
-
 from datetime import datetime, timezone
 from typing import Optional
 
@@ -19,14 +13,14 @@ class CoachReview(SQLModel, table=True):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
-_memory: dict[str, tuple[str, str]] = {}  # round_id -> (user_id, review json)
+_memory: dict[str, tuple[str, str]] = {}
 _table_ready = False
 
 
 def _engine():
     global _table_ready
     try:
-        from app.db import engine  # Member 2
+        from app.db import engine
     except ImportError:
         return None
     if not _table_ready:
@@ -58,7 +52,6 @@ def put_cached(user_id: str, review: Review) -> None:
 
 
 def delete_user(user_id: str) -> None:
-    """For Member 2's DELETE /api/data/{user_id}."""
     engine = _engine()
     if engine is None:
         for rid in [r for r, (uid, _) in _memory.items() if uid == user_id]:

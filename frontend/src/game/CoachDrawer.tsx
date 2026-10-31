@@ -1,7 +1,3 @@
-// The coach's side of the table: a column beside the table on wide screens (it can be folded away),
-// a bottom sheet on phones and tablets, opened from the "Coach" button in the hand's action row.
-// Presentation only: what goes inside comes from RamiTable.
-
 import { useEffect } from "react";
 import type { ReactNode } from "react";
 
@@ -13,9 +9,7 @@ export function CoachDrawer({
   onFold,
 }: {
   children: ReactNode;
-  /** The bottom sheet is up (phones and tablets). */
   open: boolean;
-  /** Folded away beside the table (wide screens). */
   folded: boolean;
   onClose: () => void;
   onFold: (folded: boolean) => void;

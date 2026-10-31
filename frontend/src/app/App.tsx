@@ -10,7 +10,6 @@ import ReviewPage from "@/coach/ReviewPage";
 import ChatPage from "@/coach/ChatPage";
 import DashboardPage from "@/dashboard/DashboardPage";
 
-/** Everything except /welcome needs a user (created on the welcome page with a nickname) and consent. */
 function RequireConsent({ children }: { children: JSX.Element }) {
   const consent = useApp((s) => s.consentVersion);
   const userId = useApp((s) => s.userId);

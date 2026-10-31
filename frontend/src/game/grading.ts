@@ -1,5 +1,3 @@
-// Runs the turn grader after a round: in a Web Worker in the browser, inline elsewhere (tests).
-
 import { TurnGrade, gradeTurn } from "../engine/grader";
 import type { GradeJob, GradeMessage } from "../engine/worker";
 
@@ -12,7 +10,7 @@ function gradeInline(jobs: GradeJob[], onGrade: (turnNo: number, grade: TurnGrad
       if (i >= jobs.length) return resolve();
       const job = jobs[i++];
       onGrade(job.turnNo, gradeTurn(job.input, job.played));
-      setTimeout(step, 0); // keep the page responsive between turns
+      setTimeout(step, 0);
     };
     step();
   });

@@ -1,10 +1,3 @@
-"""What-if projection: where each score could be after more sessions at the user's own pace.
-
-Gain per session = least-squares slope of the user's mean after each of their last 10
-sessions, clamped to [0, 2] points. With fewer than 3 sessions the gain is 0.
-For week w: score = mu + gain x sessions_per_week x w, half-width = 1.96 sigma + 3 w.
-"""
-
 from datetime import datetime
 
 from sqlmodel import Session
@@ -22,7 +15,6 @@ WIDEN_PER_WEEK = 3.0
 
 
 def slope(ys: list[float]) -> float:
-    """Least-squares slope of ys against 0, 1, 2, ..."""
     n = len(ys)
     if n < 2:
         return 0.0
@@ -33,7 +25,6 @@ def slope(ys: list[float]) -> float:
 
 
 def session_means(observations) -> dict[str, list[float]]:
-    """Per dimension, the mean after each session that observed it, in time order."""
     twin = Twin()
     means: dict[str, list[float]] = {d: [] for d in DIMENSIONS}
     ordered = _ordered(observations)

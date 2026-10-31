@@ -1,12 +1,3 @@
-"""Retention: raw events older than RETENTION_DAYS (90) are deleted, and users inactive for
-INACTIVE_DAYS (180) are deleted with everything about them.
-
-Runs once at startup and then every 24 hours (see app/main.py). The derived scores
-(observations and snapshots) are kept for active users, so their Brain Twin and its
-history survive the deletion of the raw events. Simulated demo players are never
-removed for inactivity.
-"""
-
 import asyncio
 import logging
 from datetime import datetime, timedelta
@@ -25,7 +16,6 @@ DAY_SECONDS = 24 * 60 * 60
 
 
 def run_retention(session: Session, now: datetime | None = None) -> dict[str, int]:
-    """Apply both retention rules once and commit. Returns what was removed."""
     now = now or utcnow()
     event_cutoff = now - timedelta(days=settings.retention_days)
     user_cutoff = now - timedelta(days=settings.inactive_days)
@@ -52,10 +42,9 @@ def run_retention_now() -> dict[str, int]:
 
 
 async def retention_loop() -> None:
-    """Run at startup, then once a day, until the server stops."""
     while True:
         try:
             await asyncio.to_thread(run_retention_now)
-        except Exception:  # a failed run must never take the API down
+        except Exception:
             log.exception("Retention run failed")
         await asyncio.sleep(DAY_SECONDS)

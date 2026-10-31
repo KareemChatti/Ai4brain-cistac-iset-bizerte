@@ -1,6 +1,3 @@
-// Cards, decks and a seeded shuffle. Card ids follow docs/contracts.md section 3:
-// rank + suit + "." + deck, e.g. "7H.1", "TS.2"; jokers are "JK.1" ... "JK.4".
-
 export type Suit = "S" | "H" | "D" | "C";
 export type Rank = "A" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "T" | "J" | "Q" | "K";
 
@@ -9,29 +6,22 @@ export const RANKS: Rank[] = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "T", 
 
 export type Card = {
   id: string;
-  rank: Rank | null; // null for a joker
+  rank: Rank | null;
   suit: Suit | null;
   deck: number;
   joker: boolean;
 };
 
-/** The rules of one round. House rules vary, so every one of these can be changed on the Rules screen. */
 export type GameConfig = {
   decks: number;
   jokers: number;
   handSize: number;
   openingMin: number;
-  /** Penalty for a joker left in hand at the end of a round. */
   jokerPenalty: number;
-  /** Penalty for a player who never opened. */
   neverOpenedPenalty: number;
-  /** The top discard may only be taken if it is laid down in the same turn. */
   discardMustBeUsed: boolean;
-  /** A player who holds the card a table joker stands for may swap it in and take the joker. */
   jokerSwap: boolean;
-  /** An ace may end a run high (Q-K-A). A run never wraps (K-A-2). */
   aceHigh: boolean;
-  /** Going out needs a final discard: you cannot lay down your last card. */
   mustDiscardToGoOut: boolean;
 };
 
@@ -49,10 +39,8 @@ export const QUICK_CONFIG: GameConfig = { decks: 1, jokers: 2, handSize: 10, ope
 
 export const configFor = (quickMode: boolean): GameConfig => (quickMode ? QUICK_CONFIG : FULL_CONFIG);
 
-/** A config saved by an older version may miss newer fields: fill them from the defaults. */
 export const withDefaults = (config: Partial<GameConfig>): GameConfig => ({ ...FULL_CONFIG, ...config });
 
-/** Rank as a number: A = 1 ... K = 13. */
 export const rankValue = (rank: Rank): number => RANKS.indexOf(rank) + 1;
 
 export const rankFromValue = (value: number): Rank => RANKS[(value === 14 ? 1 : value) - 1];
@@ -64,7 +52,6 @@ export function parseCard(id: string): Card {
   return { id, rank: code[0] as Rank, suit: code[1] as Suit, deck, joker: false };
 }
 
-/** "8H.1" -> "8H" (the form used in texts shown to people). */
 export const shortId = (id: string) => id.split(".")[0];
 
 export function makeDeck(config: GameConfig): Card[] {
@@ -78,7 +65,6 @@ export function makeDeck(config: GameConfig): Card[] {
   return cards;
 }
 
-/** Mulberry32: a tiny deterministic PRNG, so one seed always replays the same deal. */
 export function mulberry32(seed: number): () => number {
   let a = seed >>> 0;
   return () => {
@@ -99,7 +85,6 @@ export function shuffle<T>(items: T[], rng: () => number): T[] {
   return out;
 }
 
-/** Points of a card left in hand at the end of a round: face value, J/Q/K 10, ace 11, joker 25 (by default). */
 export function penaltyPoints(card: Card, jokerPenalty = 25): number {
   if (card.joker) return jokerPenalty;
   const v = rankValue(card.rank!);
@@ -107,7 +92,6 @@ export function penaltyPoints(card: Card, jokerPenalty = 25): number {
   return Math.min(v, 10);
 }
 
-/** Points of a rank inside a meld. Ace = 11, or 1 when low (A-2-3). Value 14 = high ace. */
 export function meldRankPoints(value: number): number {
   if (value === 1) return 1;
   if (value === 14) return 11;
@@ -116,7 +100,6 @@ export function meldRankPoints(value: number): number {
 
 export const isRed = (card: Card) => card.suit === "H" || card.suit === "D";
 
-/** Sort for display: by suit, then rank; jokers last. */
 export function sortHand(cards: Card[], by: "suit" | "rank" = "suit"): Card[] {
   return cards.slice().sort((a, b) => {
     if (a.joker !== b.joker) return a.joker ? 1 : -1;

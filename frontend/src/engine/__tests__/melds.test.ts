@@ -90,7 +90,6 @@ describe("findMelds", () => {
     expect(best.deadwood.map((x) => x.id)).toEqual(["2S.1"]);
   });
   it("shares a card between a set and a run correctly", () => {
-    // 5H can go in 5S-5H-5D or in 3H-4H-5H; the best split uses both melds.
     const best = findMelds(c("5S", "5H", "5D", "5C", "3H", "4H"));
     expect(best.deadwood).toHaveLength(0);
     expect(best.melds).toHaveLength(2);

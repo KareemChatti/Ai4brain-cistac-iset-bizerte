@@ -23,7 +23,6 @@ function input(hand: string[], extra: Partial<GradeInput> = {}): GradeInput {
 }
 
 describe("turn grader", () => {
-  // Three complete melds and one isolated card: the isolated card is the obvious discard.
   const position = input(["7S", "7H", "7D", "4H", "5H", "6H", "JC", "QC", "KC", "2D"]);
 
   it("gives the obvious discard a quality near 1", () => {
@@ -65,7 +64,6 @@ describe("hints", () => {
     const hand = ids("7S", "7H", "7D", "4H", "5H", "6H", "JC", "QC", "KC", "2D").map(parseCard);
     const s: GameState = { ...base, hands: [hand, base.hands[1]], opened: [true, false], phase: "play", current: 0 };
     const hint = getHint(s, 0, mulberry32(3));
-    // The three melds are on offer to lay down first.
     expect(hint.action).toBe("lay_down");
   });
 });

@@ -1,7 +1,3 @@
-// Mount point for Member 1's Rami table. When src/game/index.ts(x) exports RamiTable it is
-// picked up automatically; until then a placeholder with the same props (docs/contracts.md
-// section 2) is shown.
-
 import type { ComponentType, ReactNode } from "react";
 import type { Hint, HintActions, RoundSummary } from "@shared/types";
 import type { GameConfig } from "@/engine";

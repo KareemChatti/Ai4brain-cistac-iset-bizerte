@@ -1,10 +1,3 @@
-"""AI Collaboration Score: how well the user works with the coach, from the coach events
-of their last 10 sessions. Formulas and reasoning in docs/scoring.md.
-
-A component with no data is null and the others are re-weighted, so a user who never
-asked for a hint isn't punished.
-"""
-
 from sqlmodel import Session
 
 from app.schemas import CollabScore
@@ -22,7 +15,6 @@ def _pct(part: float, whole: float) -> float:
 
 
 def collab_from_events(events) -> CollabScore:
-    """Pure function over the events of the sessions to score (any order)."""
     events = sorted(events, key=lambda e: e.ts)
     by_type: dict[str, list] = {}
     for e in events:
@@ -38,7 +30,6 @@ def collab_from_events(events) -> CollabScore:
     checked = {e.payload.get("hint_id") for e in of("hint_checked")}
     chats = of("chat_message")
 
-    # Clarification: shown hints the user questioned (Why? or a chat question) before acting.
     def questioned(hint_id, shown_event) -> bool:
         if hint_id in why:
             return True
@@ -51,8 +42,6 @@ def collab_from_events(events) -> CollabScore:
         if shown else {"score": None, "n": 0}
     )
 
-    # Verification: calibrated trust. Right = followed a good hint or ignored a bad one.
-    # Live coach alerts only state facts the engine can prove, so acting on one counts as right.
     decided = [h for h in followed if h in outcome and isinstance(outcome[h], bool)]
     alerts = [a for a in of("coach_alert") if isinstance(a.payload.get("followed"), bool)]
     if decided or alerts:
@@ -66,12 +55,10 @@ def collab_from_events(events) -> CollabScore:
     else:
         verification = {"score": None, "n": 0}
 
-    # Iteration: going back to learn from rounds (retries and reviews) per finished round.
     rounds = of("round_end")
     learn = len(of("position_retried")) + len(of("review_opened"))
     iteration = {"score": _pct(learn, len(rounds)), "n": len(rounds)} if rounds else {"score": None, "n": 0}
 
-    # Autonomy: playing without asking.
     requests = of("hint_requested")
     turns = of("turn")
     autonomy = (
@@ -79,7 +66,6 @@ def collab_from_events(events) -> CollabScore:
         if turns else {"score": None, "n": 0}
     )
 
-    # Responsible use: try first, don't spam hints, don't share personal data.
     n_responsible = len(requests) + len(chats)
     if n_responsible:
         score = 100.0
@@ -102,7 +88,6 @@ def collab_from_events(events) -> CollabScore:
 
 
 def _spam_bursts(requests) -> int:
-    """Number of times 3 or more hints were asked within 3 consecutive turns of one round."""
     bursts = 0
     by_round: dict = {}
     for r in requests:

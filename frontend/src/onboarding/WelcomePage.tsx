@@ -1,10 +1,8 @@
-// First version for task 3.1. Task 3.5 adds the rules carousel, the full consent text and the language choice.
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ApiError, createUser, postConsent } from "@/api/client";
 import { CONSENT_VERSION, useApp } from "@/app/store";
 
-/** Same rules as the backend (backend/app/privacy.py): a nickname only, never contact details. */
 export function nicknameProblem(raw: string): string | null {
   const nickname = raw.trim().replace(/\s+/g, " ");
   if (!nickname) return "Choose a nickname.";
@@ -16,7 +14,6 @@ export function nicknameProblem(raw: string): string | null {
   return null;
 }
 
-/** The backend's 422 message, without the technical wrapping. */
 function serverMessage(err: unknown): string {
   if (err instanceof ApiError && err.status === 422) {
     const match = err.message.match(/"msg":"(?:Value error, )?([^"]+)"/);

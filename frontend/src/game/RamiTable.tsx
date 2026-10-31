@@ -1,5 +1,3 @@
-// The Rami table. Props are fixed by docs/contracts.md section 2; the app shell mounts it.
-
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import { useStore } from "zustand";
@@ -22,15 +20,10 @@ export type RamiTableProps = {
   hintsEnabled?: boolean;
   onRoundEnd: (summary: RoundSummary) => void;
   renderHintPanel?: (hint: Hint, actions: HintActions) => ReactNode;
-  /** Fixed deal, for demos and tests. */
   seed?: number;
-  /** House rules (from the Rules screen); overrides quickMode. */
   config?: GameConfig;
-  /** Coach checks during your turn. */
   liveCoach?: boolean;
-  /** The id of the match this round belongs to, if any. */
   matchId?: () => string | null;
-  /** Called once when the round ends with both players' penalties (for the match score). */
   onRoundScored?: (round: { round_id: string; user: number; ai: number; winner: "user" | "ai" }) => void;
 };
 
@@ -44,8 +37,6 @@ export function RamiTable(props: RamiTableProps) {
   const store = storeRef.current;
   const s = useStore(store);
 
-  // Start once; on leaving mid-round record an abandoned round. The short delay ignores
-  // React StrictMode's mount-unmount-mount in development.
   const mounted = useRef(false);
   useEffect(() => {
     mounted.current = true;
@@ -61,10 +52,8 @@ export function RamiTable(props: RamiTableProps) {
     };
   }, [store]);
 
-  // Open the live session (kept for the rest of the visit, so the review gets the updated profile too).
   useEffect(() => connectLive(userId), [userId]);
 
-  // Report the score once, as soon as the round is over.
   const scored = useRef(false);
   useEffect(() => {
     if (!s.result || scored.current) return;
@@ -100,7 +89,6 @@ export function RamiTable(props: RamiTableProps) {
   else if (s.userTurn === 1 && g.turn === 0) status = "You start: you have 15 cards, so lay down if you can, then discard one.";
   else status = "Lay down or lay off if you can, then discard one card.";
 
-  // Presentation state only: the coach sheet on phones, the folded drawer on wide screens.
   const [coachOpen, setCoachOpen] = useState(false);
   const [coachFolded, setCoachFolded] = useState(false);
   const hintId = s.hint?.hint_id ?? null;
@@ -118,7 +106,6 @@ export function RamiTable(props: RamiTableProps) {
   return (
     <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
       <div className="flex min-w-0 flex-col gap-4">
-        {/* Opponent */}
         <section className="flex items-center justify-between gap-4 px-1" aria-label="Opponent">
           <div>
             <p className="font-semibold">Opponent, level {level}</p>
@@ -134,7 +121,6 @@ export function RamiTable(props: RamiTableProps) {
 
         {s.opponentNote && <p className="px-1 muted" aria-live="polite">{s.opponentNote}</p>}
 
-        {/* Mat: melds and piles */}
         <div className="mat grid gap-5 p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:p-6">
           <section className="min-w-0" aria-label="Table">
             <div className="flex flex-wrap items-baseline justify-between gap-x-4">
@@ -209,7 +195,6 @@ export function RamiTable(props: RamiTableProps) {
           </div>
         </div>
 
-        {/* The tray: whose turn, the hand, the actions */}
         <section className="tray flex flex-col gap-3 p-4 sm:p-5" aria-label="Your hand">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             <span className={`turn-pill ${yourTurn ? "" : "turn-pill--wait"}`}>{turnLabel}</span>
@@ -218,7 +203,6 @@ export function RamiTable(props: RamiTableProps) {
           </div>
           {s.message && <p className="rounded-stock bg-card px-4 py-3 font-medium text-error" role="alert">{s.message}</p>}
 
-          {/* Live coach: only what the engine can prove; it never blocks a move */}
           {s.confirm && (
             <div className="rounded-stock bg-card p-4 shadow-card" role="dialog" aria-label="Coach check">
               <h3 className="text-base">Coach check before you discard</h3>
@@ -238,7 +222,6 @@ export function RamiTable(props: RamiTableProps) {
             </div>
           )}
 
-          {/* Staged melds */}
           {s.staged.length > 0 && (
             <section className="rounded-stock bg-card p-4" aria-label="Melds to lay down">
               <p className="font-semibold">Ready to lay down: {stagedPoints} points</p>
@@ -343,7 +326,6 @@ export function RamiTable(props: RamiTableProps) {
           )}
         </section>
 
-        {/* End of round */}
         {s.result && (
           <section className="card flex flex-col items-start gap-2" aria-label="Round result">
             <h2>{s.result.summary.winner === "user" ? "You won the round" : "Your opponent won the round"}</h2>
@@ -358,7 +340,6 @@ export function RamiTable(props: RamiTableProps) {
         )}
       </div>
 
-      {/* Coach: beside the table on wide screens, a bottom sheet on phones */}
       <CoachDrawer open={coachOpen} folded={coachFolded} onClose={() => setCoachOpen(false)} onFold={setCoachFolded}>
         {!s.confirm && s.liveCoach && s.alerts.length > 0 && (
           <section className="well" role="status" aria-label="Coach">
@@ -378,7 +359,6 @@ export function RamiTable(props: RamiTableProps) {
         )}
       </CoachDrawer>
 
-      {/* Memory question: a dialog over the table */}
       {s.probe && (
         <div className="probe-backdrop">
           <div className="card w-full max-w-md" role="dialog" aria-modal="true" aria-label="Memory question">

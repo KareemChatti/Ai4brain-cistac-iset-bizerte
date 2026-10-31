@@ -1,10 +1,3 @@
-"""Match history: a match is a series of rounds whose penalties add up until one player
-reaches the target (401, 501, 701 or 1001) and loses.
-
-Built from the events: `match_start` opens a match, each `round_start` names its match,
-`round_end` adds the penalties, `match_end` closes it with the winner.
-"""
-
 from sqlmodel import Session, select
 
 from app.models import Event
@@ -15,7 +8,6 @@ MATCH_TYPES = ("match_start", "match_end", "round_start", "round_end")
 
 
 def matches_from_events(events) -> list[MatchSummary]:
-    """Pure function over a user's events (any order). Newest match first."""
     matches: dict[str, dict] = {}
     round_match: dict[str, str] = {}
     for e in sorted(events, key=lambda e: e.ts):
@@ -40,7 +32,6 @@ def matches_from_events(events) -> list[MatchSummary]:
             m = matches[p["match_id"]]
             m["ended_at"] = iso(e.ts)
             m["winner"] = p.get("winner")
-            # The table's own totals win if they differ (e.g. a round sent after the match ended).
             m["user_total"] = int(p.get("user_total", m["user_total"]))
             m["ai_total"] = int(p.get("ai_total", m["ai_total"]))
     ordered = sorted(matches.values(), key=lambda m: m["started_at"], reverse=True)

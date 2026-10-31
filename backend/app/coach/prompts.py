@@ -1,5 +1,3 @@
-"""System prompts for the coach. Each one forbids anything that is not in the data it is given."""
-
 import json
 
 from .guardrails import BLOCKED_TERMS_FOR_PROMPT

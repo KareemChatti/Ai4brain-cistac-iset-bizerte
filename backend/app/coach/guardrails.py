@@ -1,13 +1,9 @@
-"""Checks every LLM answer before the user sees it: schema, fact ids, and non-clinical wording."""
-
 import re
 
 from pydantic import ValidationError
 
 from .schemas import Review
 
-# Blocked words (docs/team/member-3-coach.md). Stems match their endings (diagnos -> diagnosis, diagnostic).
-# Word boundaries keep short words like "IQ" from matching inside "unique".
 BLOCKED_PATTERNS = [
     r"diagnos\w*",
     r"disorders?",
@@ -38,7 +34,7 @@ BLOCKED_PATTERNS = [
     r"slow learner",
     r"brain damage",
     r"maladie\w*",
-    r"mard",  # Derja: illness
+    r"mard",
 ]
 BLOCKED_RE = re.compile(r"\b(" + "|".join(BLOCKED_PATTERNS) + r")\b", re.IGNORECASE)
 
@@ -62,12 +58,6 @@ def review_texts(review: Review) -> list[str]:
 
 
 def check_review(raw: dict | Review, evidence: dict) -> tuple[Review | None, list[str]]:
-    """Validate and clean a review.
-
-    Returns (review, problems). Items citing no fact or an unknown fact are removed and reported.
-    `review` is None when the answer cannot be shown at all: invalid shape, blocked words, an
-    unsupported next focus, or no strength left. The caller then retries or uses the template.
-    """
     problems: list[str] = []
     try:
         review = raw if isinstance(raw, Review) else Review.model_validate(raw)

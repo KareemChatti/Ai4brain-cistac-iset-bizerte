@@ -1,9 +1,3 @@
-// Live session: one WebSocket to the backend (/ws/session/{user_id}) while the app is open.
-// Every event is streamed the moment it is logged; the server stores and scores it, then
-// pushes back live coach messages and the updated profile. If the socket drops, the
-// logger falls back to HTTP batches and the session reconnects by itself, so a bad
-// connection never breaks the game. Protocol: backend/app/live.py.
-
 import { create } from "zustand";
 import type { Event, Profile } from "@shared/types";
 import { ackEvents, attachTransport, detachTransport } from "./logger";
@@ -107,7 +101,7 @@ function open() {
     if (socket !== ws) return;
     socket = null;
     stopTimers();
-    detachTransport(); // unacknowledged events go back to the HTTP path
+    detachTransport();
     if (!wanted) return useLive.setState({ status: "off" });
     useLive.setState({ status: "offline" });
     const delay = Math.min(10_000, 1000 * 2 ** retries++);
@@ -115,7 +109,6 @@ function open() {
   };
 }
 
-/** Open the live session for this user (no-op in mock mode, or if already open). */
 export function connectLive(userId: string) {
   if (USE_MOCK || typeof WebSocket === "undefined") return;
   if (wanted && currentUser === userId && socket) return;
@@ -125,7 +118,6 @@ export function connectLive(userId: string) {
   open();
 }
 
-/** Close the live session (e.g. after "delete my data"). */
 export function disconnectLive() {
   wanted = false;
   stopTimers();

@@ -1,5 +1,3 @@
-"""Plan, collaboration score, heatmap, goals, projection and evidence sheet."""
-
 import uuid
 from datetime import UTC, datetime, timedelta
 
@@ -30,7 +28,6 @@ def fixture_user(client, batch) -> str:
     return FIXTURE_USER
 
 
-# ---------- evidence ----------
 def test_evidence_for_the_fixture_round(client, batch):
     uid = fixture_user(client, batch)
     body = client.get(f"/api/evidence/{uid}/{FIXTURE_ROUND}").json()
@@ -41,9 +38,9 @@ def test_evidence_for_the_fixture_round(client, batch):
     kinds = {f.kind for f in sheet.facts}
     assert {"fed_opponent", "low_quality_discard", "missed_lay_off", "recall_probe_wrong",
             "plan_switch", "hint_rejected_bad"} <= kinds
-    assert all(".1" not in f.text and ".2" not in f.text for f in sheet.facts)  # card ids shown as 8H
+    assert all(".1" not in f.text and ".2" not in f.text for f in sheet.facts)
     assert sheet.stats["turns"] == 16 and sheet.stats["hints_used"] == 1
-    assert sheet.profile_delta  # the round moved at least one dimension
+    assert sheet.profile_delta
 
 
 def test_evidence_unknown_round_is_404(client):
@@ -54,7 +51,7 @@ def test_evidence_unknown_round_is_404(client):
 def test_coach_review_uses_the_real_evidence(client, batch):
     uid = fixture_user(client, batch)
     review = client.post("/api/coach/review", json={"user_id": uid, "round_id": FIXTURE_ROUND}).json()
-    assert review["source"] == "template"  # no API key in tests
+    assert review["source"] == "template"
     assert any("8H" in m["explanation"] for m in review["key_moments"])
 
 
@@ -76,7 +73,6 @@ def test_fast_and_wrong_needs_three_in_a_row():
     assert [[t.turn_no for t in r] for r in runs] == [[4, 5, 6]]
 
 
-# ---------- plan and frustration ----------
 def test_plan_for_a_new_user(client):
     uid = new_user(client)
     plan = Plan.model_validate(client.get(f"/api/plan/{uid}").json())
@@ -89,7 +85,7 @@ def test_plan_focuses_the_weakest_dimension(client):
     uid = new_user(client)
     start = datetime(2026, 10, 20, 9, tzinfo=UTC)
     events = []
-    for i in range(6):  # strong memory
+    for i in range(6):
         events += minigame(uid, 9, (start + timedelta(minutes=i)).isoformat())
     client.post("/api/events", json={"events": events})
     plan = client.get(f"/api/plan/{uid}").json()
@@ -116,9 +112,7 @@ def test_abandoned_round_suggests_a_break(client):
     assert client.get(f"/api/profile/{uid}").json()["flags"]["suggest_break"] is True
 
 
-# ---------- collaboration score ----------
 def _coach_events(uid, hints):
-    """hints: list of (followed, was_good) -> the coach events for each hint."""
     sid, rid = str(uuid.uuid4()), str(uuid.uuid4())
     events = []
     base = datetime(2026, 10, 20, 9, tzinfo=UTC)
@@ -168,13 +162,12 @@ def test_collab_endpoint(client, batch):
     uid = fixture_user(client, batch)
     body = CollabScore.model_validate(client.get(f"/api/collab/{uid}").json())
     assert body.total is not None
-    assert body.components["verification"].score == 100  # ignored a bad hint
+    assert body.components["verification"].score == 100
 
 
-# ---------- heatmap, goals, projection ----------
 def test_heatmap_slots_use_tunisia_time(client):
     uid = new_user(client)
-    client.post("/api/events", json={"events": minigame(uid, 7, "2026-10-20T07:30:00Z")})  # 08:30 in Tunis
+    client.post("/api/events", json={"events": minigame(uid, 7, "2026-10-20T07:30:00Z")})
     heat = Heatmap.model_validate(client.get(f"/api/heatmap/{uid}").json())
     row = heat.rows.index("memory")
     assert heat.cols[0] == "08-12"
@@ -192,7 +185,6 @@ def test_goal_progress(client):
     client.post("/api/events", json={"events": events})
     goals = client.get(f"/api/goals/{uid}").json()
     assert len(goals) == 1 and 0 < goals[0]["progress"] <= 1
-    # setting it again replaces it
     assert len(client.post(f"/api/goals/{uid}", json={"dimension": "memory", "target": 90}).json()) == 1
 
 
@@ -201,7 +193,7 @@ def test_projection_band_widens_and_carries_the_disclaimer(client):
     body = Projection.model_validate(client.get(f"/api/profile/{uid}/projection?sessions_per_week=5&weeks=3").json())
     memory = [p for p in body.points if p.dimension == "memory"]
     assert [p.week for p in memory] == [0, 1, 2, 3]
-    assert memory[0].score == memory[3].score  # no history -> no gain
+    assert memory[0].score == memory[3].score
     assert (memory[3].high - memory[3].low) >= (memory[0].high - memory[0].low)
     assert "Not a prediction" in body.disclaimer
 
@@ -215,7 +207,7 @@ def test_projection_gain_follows_progress(client):
     points = client.get(f"/api/profile/{uid}/projection?sessions_per_week=3&weeks=2").json()["points"]
     memory = [p for p in points if p["dimension"] == "memory"]
     assert memory[2]["score"] > memory[0]["score"]
-    assert memory[2]["score"] - memory[0]["score"] <= 2 * 3 * 2 + 0.1  # capped at 2 points per session
+    assert memory[2]["score"] - memory[0]["score"] <= 2 * 3 * 2 + 0.1
 
 
 def test_slope():

@@ -1,6 +1,3 @@
-// Typed client for every endpoint in docs/contracts.md section 5.
-// With VITE_USE_MOCK=true each call resolves with the matching file in shared/fixtures/ after 300 ms.
-
 import type {
   CollabScore,
   DimensionKey,
@@ -49,7 +46,6 @@ async function request<T>(method: Method, path: string, body?: unknown): Promise
 
 const enc = encodeURIComponent;
 
-// ---------- users, consent, events ----------
 export const createUser = (nickname: string) =>
   request<{ user_id: string }>("POST", "/api/users", { nickname });
 
@@ -59,7 +55,6 @@ export const postConsent = (user_id: string, consent_version: string, analytics:
 export const postEvents = (events: Event[]) =>
   request<{ accepted: number }>("POST", "/api/events", { events });
 
-// ---------- profile and Brain Twin ----------
 export const getProfile = (userId: string) => request<Profile>("GET", `/api/profile/${enc(userId)}`);
 
 export const getHistory = (userId: string) =>
@@ -88,7 +83,6 @@ export const getMatches = (userId: string, limit = 20) =>
 export const getEvidence = (userId: string, roundId: string) =>
   request<EvidenceSheet>("GET", `/api/evidence/${enc(userId)}/${enc(roundId)}`);
 
-// ---------- coach (M3 backend) ----------
 export const getReview = (user_id: string, round_id: string) =>
   request<Review>("POST", "/api/coach/review", { user_id, round_id });
 
@@ -102,7 +96,6 @@ export const chat = (user_id: string, message: string) =>
     { user_id, message },
   );
 
-// ---------- data rights ----------
 export const exportData = (userId: string) =>
   request<Record<string, unknown>>("GET", `/api/data/${enc(userId)}/export`);
 

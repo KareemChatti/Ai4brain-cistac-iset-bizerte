@@ -1,9 +1,3 @@
-/* Hallmark · shape: app screen · genre: playful · theme: Hum (deal 1/3, seed rami-card-game-against-1da5·ab7f7bf1·2026-10-31·r0) · redesign: full
- * nav: kept top bar, links scroll sideways on a phone · signature: the fanned hand of card-stock cards on a sugar-paper mat · states: your turn, opponent playing, memory question, coach check, round over, empty table, loading, error
- * axes: light/rounded-sans/chromatic-yellow · posture: full-palette · contrast: pass · v2.0.0 */
-/* Hallmark · pre-emit critique: P4 H5 E4 S4 R4 V4 · weakest: P, a calm study room more than a casino; the mat and the card stock carry the game, the coach steps aside into a drawer */
-/* Hallmark · waive 39b · button.pcard 137px, deck preset tiles 77px · playing cards are game pieces sized to the hand fan, and the two deck presets are option tiles with a second line */
-/* Hallmark · reworded "Today's plan" to "Today’s plan" · F1 typographic apostrophe */
 @import "./tokens.css";
 @import "./base.css" layer(base);
 @import "./game/table.css";
@@ -12,7 +6,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Tailwind 3's Preflight resets headings after the layered base: restate the type roles here. */
 @layer base {
   body { background: var(--grain), var(--color-paper); }
   h1, h2, h3 { font-family: var(--font-display); font-weight: var(--display-weight); letter-spacing: var(--tracking-display); line-height: 1.1; text-wrap: balance; overflow-wrap: break-word; min-width: 0; }
@@ -25,7 +18,6 @@
 }
 
 @layer components {
-  /* Card-stock controls: a solid edge below that rises on hover and presses on click. */
   .btn {
     --edge: 4px;
     display: inline-flex; align-items: center; justify-content: center; gap: var(--space-xs);
@@ -50,18 +42,15 @@
   .btn-quiet:active:not(:disabled) { translate: none; background: var(--color-paper-3); }
   .btn-sm { min-height: 36px; padding: 0 var(--space-md); font-size: var(--text-sm); }
 
-  /* Surfaces: one card level, paper on paper with a soft shadow, never a border and a shadow together. */
   .card { border-radius: var(--radius-card); background: var(--grain), var(--color-card); padding: var(--space-lg); box-shadow: var(--shadow-card); }
   .well { border-radius: var(--radius-stock); background: var(--color-paper-2); padding: var(--space-md); }
 
-  /* Segmented control (sort, toggles): the chosen segment is ink with paper type. */
   .seg { display: inline-flex; gap: var(--space-3xs); padding: var(--space-3xs); border-radius: var(--radius-pill); background: var(--color-paper-2); }
   .seg > button { min-height: 32px; padding: 0 var(--space-sm); border: 0; border-radius: var(--radius-pill); background: transparent; color: var(--color-ink-2); font-size: var(--text-sm); font-weight: 500; white-space: nowrap; cursor: pointer; transition: background-color var(--dur-micro) var(--ease-snap), color var(--dur-micro) var(--ease-snap); }
   .seg > button:hover { background: var(--color-paper-3); }
   .seg > button:active { background: var(--color-rule); }
   .seg > button[aria-pressed="true"] { background: var(--color-ink); color: var(--color-paper); }
 
-  /* Fields */
   .field { width: 100%; min-height: 44px; padding: 0 var(--space-md); border: 1px solid var(--color-muted); border-radius: var(--radius-input); background: var(--color-card); color: var(--color-ink); }
   .field:focus-visible { outline: 3px solid var(--color-focus); outline-offset: 0; }
   .field:disabled { opacity: 0.55; cursor: not-allowed; }

@@ -62,7 +62,6 @@ def test_empty_batch(client):
 
 
 def test_beacon_text_plain_body_is_accepted(client, batch):
-    """navigator.sendBeacon sends text/plain; it must be parsed as JSON."""
     response = client.post(
         "/api/events", content=json.dumps(batch), headers={"Content-Type": "text/plain;charset=UTF-8"}
     )
@@ -75,7 +74,7 @@ def test_beacon_text_plain_body_is_accepted(client, batch):
     "change",
     [
         {"source": "camera"},
-        {"ts": "2026-10-20T09:00:00"},  # no timezone
+        {"ts": "2026-10-20T09:00:00"},
         {"ts": "yesterday"},
         {"user_id": "not-a-uuid"},
         {"type": ""},

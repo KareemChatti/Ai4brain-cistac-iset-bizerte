@@ -1,5 +1,3 @@
-"""FastAPI application: `uvicorn app.main:app --reload` from backend/."""
-
 import asyncio
 import logging
 from collections.abc import AsyncIterator
@@ -23,17 +21,12 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     db.init_db()
     if settings.seed_demo:
         await asyncio.to_thread(demo.seed_demo)
-    cleanup = asyncio.create_task(retention.retention_loop())  # now, then once a day
+    cleanup = asyncio.create_task(retention.retention_loop())
     yield
     cleanup.cancel()
 
 
 class BeaconJSONMiddleware:
-    """Treat POST /api/events bodies as JSON whatever their Content-Type.
-
-    `navigator.sendBeacon` (used on page hide) sends text/plain to avoid a CORS
-    preflight, which FastAPI would otherwise refuse to parse.
-    """
 
     def __init__(self, app: ASGIApp) -> None:
         self.app = app
@@ -68,8 +61,6 @@ app.include_router(insights.router)
 app.include_router(matches.router)
 app.include_router(live.router)
 
-# The coach (Member 3) lives in app/coach/. A missing or broken coach must never
-# stop the rest of the API from starting.
 try:
     from app.coach.router import router as coach_router
 except Exception as exc:  # noqa: BLE001
@@ -80,11 +71,10 @@ else:
 
 @app.get("/api/health", tags=["meta"])
 def health() -> dict[str, object]:
-    """Server status, and whether the coach's language model can answer (see app/coach/llm.py)."""
     try:
         from app.coach.llm import status as coach_status
 
         coach = coach_status()
-    except Exception as exc:  # noqa: BLE001  (a missing coach must not break the health check)
+    except Exception as exc:  # noqa: BLE001
         coach = {"ready": False, "detail": f"coach not loaded ({type(exc).__name__})"}
     return {"status": "ok", "version": __version__, "coach_llm": coach}

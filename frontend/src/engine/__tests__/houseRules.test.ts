@@ -65,7 +65,7 @@ describe("live coach", () => {
   it("spots a missed lay-off and a reachable opening", () => {
     const opened = position(["8H", "KC"], { opened: [true, false], table: [meld(1, 1, "5H", "6H", "7H")] });
     expect(coachAlerts(opened, 0, null).map((a) => a.kind)).toEqual(["missed_lay_off"]);
-    const closed = position(["TS", "TH", "TD", "TC", "QC", "KC", "AC", "2D"]); // 40 + 31 = 71
+    const closed = position(["TS", "TH", "TD", "TC", "QC", "KC", "AC", "2D"]);
     expect(coachAlerts(closed, 0, null).map((a) => a.kind)).toEqual(["opening_reachable"]);
   });
 

@@ -1,18 +1,13 @@
-// Position evaluation shared by the AI, the grader and the hints.
-
 import { Card, GameConfig, makeDeck, shortId } from "./cards";
 import { canLayOff, findMelds } from "./melds";
 import { GameState, Player } from "./state";
 
-/** What a player can see when deciding: their hand, the table, the known cards. */
 export type View = {
   hand: Card[];
   table: Card[][];
   opened: boolean;
   config: GameConfig;
-  /** Cards the player has not seen: the possible next draws. */
   unseen: Card[];
-  /** Cards the opponent took from the discard pile. */
   opponentTaken: Card[];
   opponentOpened: boolean;
 };
@@ -41,7 +36,6 @@ const handKey = (hand: Card[]) =>
     .sort()
     .join(",");
 
-/** Memoised distance evaluation (positions repeat a lot during search). */
 export class Evaluator {
   private cache = new Map<string, number>();
   constructor(
@@ -50,10 +44,6 @@ export class Evaluator {
     private config: GameConfig,
   ) {}
 
-  /**
-   * Cards not covered by the best melds (minus those that can be laid off once
-   * opened), plus 3 if the player has not opened and cannot reach the opening yet.
-   */
   distance(hand: Card[]): number {
     const key = handKey(hand);
     const hit = this.cache.get(key);
@@ -70,7 +60,6 @@ export function distanceToOut(hand: Card[], table: Card[][], opened: boolean, co
   return new Evaluator(table, opened, config).distance(hand);
 }
 
-/** The unseen cards grouped by face (two decks: the same face can appear twice), with weights. */
 export function drawDistribution(unseen: Card[]): { card: Card; weight: number }[] {
   const groups = new Map<string, { card: Card; weight: number }>();
   for (const card of unseen) {
@@ -82,7 +71,6 @@ export function drawDistribution(unseen: Card[]): { card: Card; weight: number }
   return [...groups.values()];
 }
 
-/** Distinct discard candidates (one per face), never a joker while something else is possible. */
 export function discardCandidates(hand: Card[], mustUse: string[] = []): Card[] {
   const seen = new Set<string>();
   const out: Card[] = [];
@@ -97,11 +85,6 @@ export function discardCandidates(hand: Card[], mustUse: string[] = []): Card[] 
   return real.length ? real : out;
 }
 
-/**
- * Expected distance to going out after discarding `discard` and drawing the next
- * card, averaged over every unseen card. This is our "turns to go out" estimate:
- * each turn can place at most about one more card.
- */
 export function expectedDistance(view: View, discard: Card, evaluator: Evaluator, draws = drawDistribution(view.unseen)): number {
   const rest = view.hand.filter((c) => c.id !== discard.id);
   if (!draws.length) return evaluator.distance(rest);
@@ -114,7 +97,6 @@ export function expectedDistance(view: View, discard: Card, evaluator: Evaluator
   return total / weight;
 }
 
-/** Would discarding this card help the opponent? (it fits cards they collected, or a table meld) */
 export function isDangerous(card: Card, view: View): boolean {
   if (card.joker) return true;
   if (view.opponentOpened && view.table.some((m) => canLayOff(card, m))) return true;

@@ -9,21 +9,17 @@ export type TableMeld = { id: number; owner: Player; kind: MeldKind; cards: Card
 export type GameState = {
   config: GameConfig;
   seed: number;
-  stock: Card[]; // top of the stock = last element
-  discard: Card[]; // top of the discard pile = last element
+  stock: Card[];
+  discard: Card[];
   hands: [Card[], Card[]];
   table: TableMeld[];
   nextMeldId: number;
   opened: [boolean, boolean];
   current: Player;
   phase: Phase;
-  /** Number of turns completed so far (a turn ends with a discard). */
   turn: number;
-  /** Cards that must be on the table before the current player may discard. */
   mustUse: string[];
-  /** Cards each player took from the discard pile (public information). */
   taken: [Card[], Card[]];
-  /** Card ids each player discarded, in order (public information). */
   discarded: [string[], string[]];
   reshuffles: number;
   winner: Player | null;
@@ -31,7 +27,6 @@ export type GameState = {
 
 export const other = (p: Player): Player => (p === 0 ? 1 : 0);
 
-/** Deal a new round. The first player gets one extra card and starts by discarding. */
 export function newGame(seed: number, config: GameConfig, firstPlayer: Player = 0): GameState {
   setMeldRules(config);
   const rng = mulberry32(seed);
@@ -64,7 +59,6 @@ export function newGame(seed: number, config: GameConfig, firstPlayer: Player = 
 
 export const topDiscard = (state: GameState): Card | null => state.discard[state.discard.length - 1] ?? null;
 
-/** A copy deep enough for applyAction to change freely. */
 export function cloneState(s: GameState): GameState {
   return {
     ...s,

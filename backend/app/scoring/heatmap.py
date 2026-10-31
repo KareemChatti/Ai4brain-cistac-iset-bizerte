@@ -1,8 +1,3 @@
-"""Heatmap: average observation value per dimension and time of day.
-
-Times are shown in Tunisia time (UTC+1, no daylight saving), since stored event times are UTC.
-"""
-
 from collections import defaultdict
 from datetime import timedelta
 

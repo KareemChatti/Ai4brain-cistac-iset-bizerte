@@ -1,4 +1,3 @@
-// First version for task 3.1. Task 3.3 adds logging and the personal-data reminder.
 import { FormEvent, useState } from "react";
 import { chat } from "@/api/client";
 import { useApp } from "@/app/store";

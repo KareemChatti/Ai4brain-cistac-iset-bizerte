@@ -1,6 +1,3 @@
-// Round review (task 3.3): every key moment can show the recorded facts it is based on
-// ("See the evidence"), the better move is revealed on request, and the review can be read aloud
-// by the browser (nothing is recorded or stored).
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import type { EvidenceSheet, Fact, Review } from "@shared/types";
@@ -22,7 +19,6 @@ export default function ReviewPage() {
   const { data: review, error, loading } = useAsync(() => getReview(userId, roundId), [userId, roundId]);
   const evidence = useAsync<EvidenceSheet | null>(() => getEvidence(userId, roundId).catch(() => null), [userId, roundId]);
 
-  // Counts toward the AI Collaboration Score's "iteration" part (going back to learn from a round).
   const logged = useRef("");
   useEffect(() => {
     if (!review || logged.current === roundId) return;

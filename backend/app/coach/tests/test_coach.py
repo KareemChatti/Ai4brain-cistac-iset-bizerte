@@ -31,7 +31,6 @@ def draft_from(review: dict) -> ReviewDraft:
     return ReviewDraft.model_validate({k: v for k, v in review.items() if k not in ("round_id", "source")})
 
 
-# ---------- guardrails ----------
 def test_fixture_review_passes_guardrails():
     review, problems = check_review(REVIEW, EVIDENCE)
     assert review is not None
@@ -71,14 +70,13 @@ def test_unsupported_next_focus_is_rejected():
     assert review is None
 
 
-# ---------- template ----------
 def test_template_review_cites_only_real_facts():
     review = build_template_review(EVIDENCE)
     assert review.source == "template"
-    assert [m.turn_no for m in review.key_moments] == [7, 9, 11]  # the three priority kinds, in turn order
+    assert [m.turn_no for m in review.key_moments] == [7, 9, 11]
     checked, problems = check_review(review, EVIDENCE)
     assert checked is not None, problems
-    assert not re.search(r"\b[2-9TJQKA][SHDC]\b", review.voice_text)  # no card codes when spoken
+    assert not re.search(r"\b[2-9TJQKA][SHDC]\b", review.voice_text)
 
 
 def test_template_review_without_facts():
@@ -95,7 +93,6 @@ def test_template_hint_is_honest_about_confidence():
     assert "55%" in text
 
 
-# ---------- endpoints ----------
 def test_review_endpoint_uses_template_when_llm_disabled(client):
     r = client.post("/api/coach/review", json={"user_id": USER, "round_id": ROUND})
     assert r.status_code == 200
@@ -120,7 +117,6 @@ def test_review_retries_once_then_uses_llm_answer(client, monkeypatch):
     assert r.json()["source"] == "llm"
     assert len(calls) == 2
 
-    # Cached: a refresh does not call the LLM again.
     r2 = client.post("/api/coach/review", json={"user_id": USER, "round_id": ROUND})
     assert r2.json() == r.json()
     assert len(calls) == 2
@@ -172,7 +168,7 @@ def test_chat_fallback_answers_from_profile(client, monkeypatch):
     r = client.post("/api/coach/chat", json={"user_id": USER, "message": "What should I work on?"})
     body = r.json()
     assert body["contains_personal_data"] is False
-    assert "reasoning" in body["reply"]  # lowest score in the profile fixture
+    assert "reasoning" in body["reply"]
 
 
 def test_data_uses_member2_profile_helpers():
@@ -182,7 +178,6 @@ def test_data_uses_member2_profile_helpers():
     assert data._m2("recent_round_ids") is not None
 
 
-# ---------------- local model through Ollama ----------------
 import io  # noqa: E402
 import json as _json  # noqa: E402
 import urllib.error  # noqa: E402
@@ -200,7 +195,6 @@ class _FakeResponse(io.BytesIO):
 
 
 def _ollama(monkeypatch, reply=None, error=None, capture=None):
-    """Replace the HTTP call to Ollama: return `reply` as the model's message, or raise `error`."""
     monkeypatch.delenv("COACH_LLM_DISABLED", raising=False)
     monkeypatch.setenv("COACH_PROVIDER", "ollama")
 
@@ -246,7 +240,7 @@ def test_ollama_reply_is_parsed_and_the_schema_is_sent_inline(monkeypatch):
     assert draft.headline == "A close round."
     body = sent[0]
     assert body["stream"] is False and body["model"] == llm.model_name()
-    assert "$ref" not in _json.dumps(body["format"])  # refs expanded for small local models
+    assert "$ref" not in _json.dumps(body["format"])
     assert body["format"]["properties"]["key_moments"]["items"]["properties"]["fact_ids"]
 
 
@@ -280,7 +274,7 @@ def test_review_from_ollama_passes_the_guardrails(client, monkeypatch):
 
 def test_review_from_ollama_with_invented_facts_is_cleaned(client, monkeypatch):
     bad = _valid_draft()
-    bad["key_moments"][0]["fact_ids"] = ["F99"]  # a fact that is not in the evidence sheet
+    bad["key_moments"][0]["fact_ids"] = ["F99"]
     _ollama(monkeypatch, reply={"message": {"content": _json.dumps(bad)}})
     review = client.post("/api/coach/review", json={"user_id": USER, "round_id": ROUND}).json()
     assert all("F99" not in m["fact_ids"] for m in review["key_moments"])
@@ -292,4 +286,4 @@ def test_a_stopped_ollama_is_remembered_briefly(monkeypatch):
     for _ in range(3):
         with pytest.raises(llm.LLMUnavailable, match="not running"):
             llm.complete_json("s", "u", ReviewDraft, timeout=5)
-    assert len(calls) == 1  # the next calls fail at once instead of waiting for Windows to refuse again
+    assert len(calls) == 1

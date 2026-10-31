@@ -7,7 +7,6 @@ import { createRoundStore } from "../store";
 const USER = "11111111-1111-4111-8111-111111111111";
 const SESSION = "22222222-2222-4222-8222-222222222222";
 
-/** Play one round: the "user" is driven by the level-2 AI through the store's own actions. */
 async function playRound(seed: number, hints = true) {
   const store = createRoundStore({
     userId: USER,
@@ -47,7 +46,6 @@ async function playRound(seed: number, hints = true) {
     } else s.discard(action.cardId);
     if (store.getState().message) throw new Error(store.getState().message!);
   }
-  // Wait for the grader.
   for (let i = 0; i < 500 && store.getState().result?.grading; i++) await new Promise((r) => setTimeout(r, 5));
   return store;
 }
@@ -104,7 +102,6 @@ describe("a full round through the table store", () => {
       expect(t.payload.quality).toBeNull();
       expect(Object.keys(t.payload.missed as object).sort()).toEqual(["joker_swaps", "lay_offs", "melds_in_hand"]);
     }
-    // Turn numbers are 1, 2, 3...
     expect(turns.map((t) => t.payload.turn_no)).toEqual(turns.map((_, i) => i + 1));
   }, 60_000);
 

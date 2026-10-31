@@ -6,7 +6,6 @@ import profileFixture from "@shared/fixtures/profile.json";
 import { useApp } from "@/app/store";
 import DashboardPage from "./DashboardPage";
 
-// Lets a test replace the mock profile (the rest of the client stays in mock mode).
 const override = vi.hoisted(() => ({ profile: null as Profile | null }));
 vi.mock("@/api/client", async (importOriginal) => {
   const mod = await importOriginal<typeof import("@/api/client")>();
@@ -14,7 +13,6 @@ vi.mock("@/api/client", async (importOriginal) => {
 });
 
 beforeAll(() => {
-  // Recharts' ResponsiveContainer needs ResizeObserver, which jsdom lacks.
   globalThis.ResizeObserver ??= class {
     observe() {}
     unobserve() {}

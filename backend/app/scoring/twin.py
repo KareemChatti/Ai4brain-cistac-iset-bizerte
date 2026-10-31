@@ -1,16 +1,3 @@
-"""The Brain Twin: one uncertainty-aware belief per dimension, updated with a Kalman filter.
-
-Each dimension's true score is believed to be Normal(mu, sigma^2) on a 0-100 scale.
-- Start: mu = 50, sigma = 25 (we know nothing yet).
-- Drift: before each update, var += q^2 * days since the last update (q = 2), so the
-  twin can follow real change; the displayed range also widens while the user is away.
-- Update with an observation x of noise r: K = var / (var + r^2), mu += K (x - mu), var *= (1 - K).
-- Displayed range: mu +/- 1.96 sigma, clipped to 0-100 (a 95% range).
-
-Pure Python, no database: `replay()` turns a list of observations into a Twin.
-Full explanation in docs/scoring.md.
-"""
-
 import math
 from collections.abc import Iterable
 from dataclasses import dataclass, field, replace
@@ -21,7 +8,7 @@ from app.scoring.observations import Observation
 
 PRIOR_MU = 50.0
 PRIOR_SIGMA = 25.0
-DRIFT_Q = 2.0  # points of standard deviation per sqrt(day)
+DRIFT_Q = 2.0
 Z95 = 1.96
 TREND_WINDOW = timedelta(days=7)
 
@@ -55,14 +42,12 @@ class DimensionBelief:
         self.n_obs += 1
 
     def observe(self, x: float, r: float, ts: datetime) -> None:
-        """Drift since the last observation of this dimension, then update."""
         if self.last_ts is not None:
             self.drift(_days(self.last_ts, ts))
         self.update(x, r)
         self.last_ts = ts
 
     def at(self, ts: datetime) -> "DimensionBelief":
-        """The belief as it stands at `ts` (drift applied), without changing this one."""
         belief = replace(self)
         if belief.last_ts is not None:
             belief.drift(_days(belief.last_ts, ts))
@@ -92,7 +77,6 @@ class Twin:
         self.mu_history[obs.dimension].append((obs.ts, belief.mu))
 
     def trend(self, dimension: str, at: datetime) -> float:
-        """Change of the mean over the last 7 days. 0 until there is a week of history."""
         cutoff = at - TREND_WINDOW
         before = [mu for ts, mu in self.mu_history[dimension] if ts <= cutoff]
         if not before:
@@ -118,7 +102,6 @@ def _ordered(observations: Iterable[Observation]) -> list[Observation]:
 
 
 def replay(observations: Iterable[Observation]) -> Twin:
-    """Apply every observation in time order, starting from the prior."""
     twin = Twin()
     for obs in _ordered(observations):
         twin.apply(obs)
@@ -128,12 +111,11 @@ def replay(observations: Iterable[Observation]) -> Twin:
 @dataclass(frozen=True)
 class SnapshotPoint:
     ts: datetime
-    trigger: str  # "round" | "minigame"
+    trigger: str
     dimensions: dict[str, dict[str, float | int]]
 
 
 def replay_with_snapshots(observations: Iterable[Observation]) -> tuple[Twin, list[SnapshotPoint]]:
-    """Replay, recording the whole profile after each round or mini-game."""
     twin = Twin()
     points: list[SnapshotPoint] = []
     ordered = _ordered(observations)

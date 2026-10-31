@@ -1,5 +1,3 @@
-// Turn rules. applyAction never mutates its input: it returns a new state or throws RuleError.
-
 import { Card, mulberry32, penaltyPoints, shortId, shuffle } from "./cards";
 import { canLayOff, findMelds, jokerStandsFor, meldKind, meldValue, meldsContaining, orderMeld } from "./melds";
 import { GameState, Player, cloneState, other, topDiscard } from "./state";
@@ -14,7 +12,6 @@ export type Action =
 
 export class RuleError extends Error {}
 
-/** Safety net: a round that somehow drags on this long ends on penalties. */
 export const MAX_TURNS = 400;
 
 const fail = (message: string): never => {
@@ -27,14 +24,12 @@ function takeFromHand(hand: Card[], id: string): Card {
   return hand.splice(i, 1)[0];
 }
 
-/** Could `card` be put on the table this turn if the player took it? */
 export function canUseCard(state: GameState, player: Player, card: Card): boolean {
   const hand = [...state.hands[player], card];
   if (state.opened[player]) {
     if (state.table.some((m) => canLayOff(card, m.cards))) return true;
     return meldsContaining(hand, card).length > 0;
   }
-  // Not opened yet: the opening lay-down must include this card and reach the minimum.
   for (const meld of meldsContaining(hand, card)) {
     const rest = hand.filter((c) => !meld.some((m) => m.id === c.id));
     if (meldValue(meld) + findMelds(rest, "opening").meldPoints >= state.config.openingMin) return true;
@@ -42,7 +37,6 @@ export function canUseCard(state: GameState, player: Player, card: Card): boolea
   return false;
 }
 
-/** After a lay-down or lay-off: an empty hand ends the round, unless the house rule wants a final discard. */
 function finishIfEmpty(state: GameState, player: Player): GameState {
   if (state.hands[player].length === 0) {
     if (state.config.mustDiscardToGoOut) fail("Keep one card: you go out by discarding your last card.");
@@ -61,7 +55,6 @@ function endOnPenalties(state: GameState): GameState {
 
 export function applyAction(input: GameState, action: Action): GameState {
   const state = applyRaw(input, action);
-  // A taken discard or a swapped joker must stay playable until the player places it.
   if (state.phase === "play" && action.type !== "drawDiscard") {
     const p = state.current;
     for (const id of state.mustUse) {
@@ -192,7 +185,6 @@ function applyRaw(input: GameState, action: Action): GameState {
 
 export const isRoundOver = (state: GameState) => state.phase === "over";
 
-/** Penalty per player: 0 for the winner, 100 if never opened, else the cards left (joker 25). Both values come from the config. */
 export function scoreRound(state: GameState): [number, number] {
   const { neverOpenedPenalty = 100, jokerPenalty = 25 } = state.config;
   const score = (p: Player) => {
@@ -203,7 +195,6 @@ export function scoreRound(state: GameState): [number, number] {
   return [score(0), score(1)];
 }
 
-/** Every legal action for the current player. Lay-downs are summarised by the best available one. */
 export function legalActions(state: GameState): Action[] {
   if (state.phase === "over") return [];
   const p = state.current;
@@ -219,7 +210,6 @@ export function legalActions(state: GameState): Action[] {
   if (best.melds.length && (state.opened[p] || best.meldPoints >= state.config.openingMin)) {
     actions.push({ type: "layDown", melds: best.melds.map((m) => m.map((c) => c.id)) });
   }
-  // Lay-downs that place a card that must be used this turn.
   for (const id of state.mustUse) {
     const card = hand.find((c) => c.id === id);
     if (!card) continue;
@@ -242,7 +232,6 @@ export function legalActions(state: GameState): Action[] {
             applyAction(state, swap);
             actions.push(swap);
           } catch {
-            /* the joker could not be used this turn */
           }
         }
       }
@@ -251,7 +240,7 @@ export function legalActions(state: GameState): Action[] {
   const waiting = state.mustUse.some((id) => hand.some((c) => c.id === id));
   if (!waiting) for (const card of hand) actions.push({ type: "discard", cardId: card.id });
   return actions.filter((action) => {
-    if (action.type === "discard" || action.type === "swapJoker") return true; // already checked
+    if (action.type === "discard" || action.type === "swapJoker") return true;
     try {
       applyAction(state, action);
       return true;

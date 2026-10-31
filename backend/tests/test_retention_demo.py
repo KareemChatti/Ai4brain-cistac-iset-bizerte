@@ -1,5 +1,3 @@
-"""The 90-day / 180-day retention job and the simulated demo players."""
-
 import uuid
 from datetime import timedelta
 
@@ -30,7 +28,6 @@ def set_last_active(user_id: str, when) -> None:
         session.commit()
 
 
-# ---------------- retention ----------------
 def test_events_older_than_90_days_are_deleted(client):
     now = utcnow()
     old = make_event(ts=iso(now - timedelta(days=91)))
@@ -44,10 +41,10 @@ def test_events_older_than_90_days_are_deleted(client):
 
 
 def test_derived_scores_survive_event_cleanup(client, batch):
-    client.post("/api/events", json={"events": batch["events"]})  # fixture dated Oct 19
+    client.post("/api/events", json={"events": batch["events"]})
     before = client.get(f"/api/profile/{FIXTURE_USER}").json()["dimensions"]
 
-    retention(utcnow() + timedelta(days=200 - 180 + 90))  # far enough for the events, user still active
+    retention(utcnow() + timedelta(days=200 - 180 + 90))
 
     assert count_rows(Event.__table__) == 0
     assert count_rows(Observation.__table__) > 0
@@ -68,7 +65,6 @@ def test_users_inactive_for_180_days_are_deleted_with_everything(client, batch):
     assert count_rows(User.__table__, user_id=FIXTURE_USER) == 0
     assert count_rows(Observation.__table__, user_id=FIXTURE_USER) == 0
     assert count_rows(User.__table__, user_id=keep) == 1
-    # Late events of the removed user are dropped, like after "delete my data".
     client.post("/api/events", json={"events": [make_event(ts=iso(utcnow()))]})
     assert count_rows(User.__table__, user_id=FIXTURE_USER) == 0
 
@@ -79,7 +75,6 @@ def test_retention_is_idempotent(client):
     assert retention() == {"events": 0, "users": 0}
 
 
-# ---------------- demo players ----------------
 def test_demo_events_follow_the_contract():
     from app.schemas import EventBatch
 
@@ -112,7 +107,6 @@ def test_seed_fills_every_dashboard_endpoint(client):
     assert client.get(f"/api/collab/{improver.user_id}").json()["total"] is not None
     assert client.get(f"/api/plan/{improver.user_id}").status_code == 200
     assert client.get(f"/api/heatmap/{improver.user_id}").status_code == 200
-    # The newcomer shows the "still learning about you" state.
     newcomer_profile = client.get(f"/api/profile/{newcomer.user_id}").json()
     assert any(v["n_obs"] < 5 for v in newcomer_profile["dimensions"].values())
 

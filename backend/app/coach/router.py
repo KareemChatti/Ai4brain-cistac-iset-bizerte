@@ -1,9 +1,3 @@
-"""Coach endpoints (docs/contracts.md section 5). Member 2's app/main.py includes this router with one line:
-
-    from app.coach.router import router as coach_router
-    app.include_router(coach_router)
-"""
-
 import logging
 import re
 import time
@@ -31,7 +25,6 @@ router = APIRouter(prefix="/api/coach", tags=["coach"])
 
 
 def generate_review(evidence: dict, language: str = "en") -> tuple[Review, list[str]]:
-    """LLM review with guardrails, one retry, then the template. Total LLM time stays under 15 s."""
     problems: list[str] = []
     deadline = time.monotonic() + DEFAULT_TIMEOUT_S
     for attempt in (1, 2):
@@ -46,7 +39,7 @@ def generate_review(evidence: dict, language: str = "en") -> tuple[Review, list[
         except LLMUnavailable as e:
             problems.append(f"attempt {attempt}: {e}")
             if any(reason in str(e) for reason in ("timeout", "not set", "disabled", "not running", "not installed")):
-                break  # retrying would not help
+                break
             continue
         candidate = {**draft.model_dump(), "round_id": evidence["round_id"], "source": "llm"}
         review, found = check_review(candidate, evidence)
@@ -126,7 +119,6 @@ def _fallback_chat(profile: dict | None) -> str:
 
 @router.post("/chat", response_model=ChatResponse)
 def chat(body: ChatRequest) -> ChatResponse:
-    # Never send personal data to the LLM, and never store the message text.
     if contains_personal_data(body.message):
         return ChatResponse(reply=PERSONAL_DATA_REPLY, fact_ids=[], contains_personal_data=True)
     profile = data.get_profile(body.user_id)

@@ -1,15 +1,3 @@
-"""Scoring pipeline: newly stored events -> observations -> Brain Twin snapshots.
-
-Called by POST /api/events after the events are committed, once per user, with only
-the events that were not stored before.
-
-1. Every round touched by the new events is re-scored from all its stored events
-   (so a `turn_graded` arriving after `round_end` updates the round's reasoning score).
-2. Every session with new mini-game events is re-scored the same way.
-3. The twin is replayed from all the user's observations and the snapshot history is
-   rewritten: one snapshot after each round or mini-game.
-"""
-
 from sqlalchemy import delete
 from sqlmodel import Session, select
 

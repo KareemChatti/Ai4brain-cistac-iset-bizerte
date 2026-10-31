@@ -1,7 +1,3 @@
-// The hint engine. It deliberately uses the faster level-4 logic (which also weighs what
-// the opponent collects), so it is sometimes wrong; its confidence says how often the
-// hinted card was also the best choice across 30 sampled next draws.
-
 import type { Hint } from "@shared/types";
 import { Card, penaltyPoints, shortId, shuffle } from "./cards";
 import { Evaluator, View, discardCandidates, isDangerous, viewOf } from "./eval";
@@ -51,7 +47,6 @@ export function getHint(state: GameState, player: Player, rng: () => number = Ma
   };
 }
 
-/** Share of 30 sampled next draws for which `card` is (one of) the best discards. */
 function discardConfidence(view: View, candidates: Card[], card: Card, ev: Evaluator, rng: () => number): number {
   const sample = shuffle(view.unseen, rng).slice(0, 30);
   if (!sample.length) return 0.5;
@@ -81,7 +76,6 @@ function reasonsFor(card: Card, view: View): string[] {
   return reasons.slice(0, 3);
 }
 
-/** Plain-language versions of the reason codes, for the hint panel. */
 export const REASON_TEXT: Record<string, string> = {
   keeps_run_open: "keeps your runs open",
   keeps_set_open: "keeps your sets open",

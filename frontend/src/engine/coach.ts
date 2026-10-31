@@ -1,6 +1,3 @@
-// Live coach checks: facts the engine can prove from what the player sees, shown during the turn.
-// They never block a move; the table shows them and logs a `coach_alert` event per kind and turn.
-
 import { Card, shortId } from "./cards";
 import { canLayOff, findMelds, isValidMeld, jokerStandsFor } from "./melds";
 import { GameState, Player, other } from "./state";
@@ -12,7 +9,6 @@ export type CoachAlert = { kind: CoachAlertKind; cards: string[]; text: string }
 
 const face = (id: string) => shortId(id).replace("T", "10");
 
-/** Cards the opponent took from the discard pile and still holds (not laid down, not discarded again). */
 export function opponentKnownCards(state: GameState, player: Player): Card[] {
   const opp = other(player);
   const onTable = new Set(state.table.flatMap((m) => m.cards.map((c) => c.id)));
@@ -20,7 +16,6 @@ export function opponentKnownCards(state: GameState, player: Player): Card[] {
   return state.taken[opp].filter((c) => !onTable.has(c.id) && !discarded.has(c.id));
 }
 
-/** Why discarding `card` helps the opponent, or null when nothing can be proven. */
 export function feedsOpponent(state: GameState, player: Player, card: Card): string | null {
   if (state.opened[other(player)] && state.table.some((m) => canLayOff(card, m.cards))) {
     return `${face(card.id)} fits a meld on the table and your opponent has opened`;
@@ -36,7 +31,6 @@ export function feedsOpponent(state: GameState, player: Player, card: Card): str
   return null;
 }
 
-/** Alerts for the play phase of `player`'s turn. `selected` is the card about to be discarded, if any. */
 export function coachAlerts(state: GameState, player: Player, selected: Card | null): CoachAlert[] {
   if (state.phase !== "play" || state.current !== player) return [];
   const hand = state.hands[player];
@@ -70,7 +64,6 @@ export function coachAlerts(state: GameState, player: Player, selected: Card | n
             applyAction(state, { type: "swapJoker", cardId: card.id, meldId: meld.id });
             swaps.push(card.id);
           } catch {
-            /* the joker could not be used this turn */
           }
         }
       }

@@ -1,15 +1,3 @@
-"""The only place that talks to the LLM provider. Swap the provider here and nothing else changes.
-
-Two providers:
-- "ollama" (default without an API key): a local model served by Ollama (https://ollama.com),
-  no key and no account. Ollama's structured outputs constrain the reply to the JSON schema.
-- "anthropic": Claude through the Anthropic SDK, when ANTHROPIC_API_KEY is set.
-
-Settings (backend/.env): COACH_PROVIDER, OLLAMA_URL, OLLAMA_MODEL, COACH_MODEL (Claude model),
-COACH_TIMEOUT_S. Whatever the provider, guardrails.py then checks the content (fact ids, wording),
-and the router falls back to a template review if the model is unavailable.
-"""
-
 import json
 import os
 import socket
@@ -28,7 +16,7 @@ DEFAULT_OLLAMA_URL = "http://127.0.0.1:11434"
 
 
 class LLMUnavailable(Exception):
-    """No key, model not running, timeout, API error or refusal. Callers fall back to a template."""
+    pass
 
 
 def provider() -> str:
@@ -48,12 +36,10 @@ def _ollama_url() -> str:
     return os.getenv("OLLAMA_URL", DEFAULT_OLLAMA_URL).rstrip("/")
 
 
-# A local model needs time to load into memory on the first request; a hosted API does not.
 DEFAULT_TIMEOUT_S = float(os.getenv("COACH_TIMEOUT_S") or (60.0 if provider() == "ollama" else 15.0))
 
 
 def complete_json(system: str, user: str, schema_model: type[T], timeout: float = DEFAULT_TIMEOUT_S) -> T:
-    """Ask the model for JSON matching `schema_model` and return it parsed."""
     if os.getenv("COACH_LLM_DISABLED") == "1":
         raise LLMUnavailable("LLM disabled by COACH_LLM_DISABLED")
     if provider() == "ollama":
@@ -61,9 +47,7 @@ def complete_json(system: str, user: str, schema_model: type[T], timeout: float 
     return _anthropic_json(system, user, schema_model, timeout)
 
 
-# ---------------------------------------------------------------- Ollama (local)
 def inline_schema(schema_model: type[BaseModel]) -> dict[str, Any]:
-    """The model's JSON schema with every $ref expanded, which local models follow more reliably."""
     schema = schema_model.model_json_schema()
     defs = schema.pop("$defs", {})
 
@@ -85,11 +69,10 @@ def _post(path: str, body: dict | None, timeout: float) -> dict:
         f"{_ollama_url()}{path}", data=data, headers={"Content-Type": "application/json"},
         method="POST" if body is not None else "GET",
     )
-    with urllib.request.urlopen(request, timeout=timeout) as response:  # noqa: S310 (local Ollama URL)
+    with urllib.request.urlopen(request, timeout=timeout) as response:  # noqa: S310
         return json.loads(response.read().decode())
 
 
-# When Ollama is not running, refusing a connection costs ~2 s on Windows: remember it briefly.
 DOWN_FOR_S = 30.0
 _down_until = 0.0
 
@@ -129,7 +112,6 @@ def _ollama_json(system: str, user: str, schema_model: type[T], timeout: float) 
         raise LLMUnavailable(f"invalid JSON: {e.error_count()} problem(s)") from e
 
 
-# ---------------------------------------------------------------- Anthropic (hosted)
 _client = None
 
 
@@ -145,8 +127,6 @@ def _get_client():
 
 
 def _anthropic_json(system: str, user: str, schema_model: type[T], timeout: float) -> T:
-    """Structured outputs make the reply schema-valid. Sampling parameters such as temperature are
-    not sent: current models reject them, so low `effort` keeps answers short and fast."""
     client = _get_client()
     import anthropic
 
@@ -166,7 +146,7 @@ def _anthropic_json(system: str, user: str, schema_model: type[T], timeout: floa
         raise LLMUnavailable("connection error") from e
     except anthropic.APIStatusError as e:
         raise LLMUnavailable(f"API error {e.status_code}") from e
-    except ValueError as e:  # reply did not validate against the schema
+    except ValueError as e:
         raise LLMUnavailable(f"invalid JSON: {e}") from e
 
     if response.stop_reason != "end_turn" or response.parsed_output is None:
@@ -174,9 +154,7 @@ def _anthropic_json(system: str, user: str, schema_model: type[T], timeout: floa
     return response.parsed_output
 
 
-# ---------------------------------------------------------------- status (for /api/health)
 def status() -> dict[str, Any]:
-    """Which model the coach uses and whether it can answer right now (cheap check)."""
     info: dict[str, Any] = {"provider": provider(), "model": model_name(), "ready": False}
     if os.getenv("COACH_LLM_DISABLED") == "1":
         info["detail"] = "disabled"

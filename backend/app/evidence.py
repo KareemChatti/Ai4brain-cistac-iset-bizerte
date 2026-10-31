@@ -1,10 +1,3 @@
-"""Evidence sheet for the coach: the only facts the coach may talk about for one round.
-
-`build_evidence(user_id, round_id)` is called directly by the coach (Member 3) and by
-GET /api/evidence/{user_id}/{round_id}. Each fact has a concrete, human `text` with turn
-numbers and cards, and ids F1, F2, ... in turn order.
-"""
-
 import statistics
 from datetime import datetime
 
@@ -25,9 +18,7 @@ RANKS = "A23456789TJQK"
 WORDS = {2: "two", 3: "three", 4: "four", 5: "five", 6: "six"}
 
 
-# ---------- cards ----------
 def card(card_id: str | None) -> str:
-    """'8H.1' -> '8H', 'TS.2' -> '10S', 'JK.1' -> 'a joker'."""
     if not card_id:
         return "a card"
     code = str(card_id).split(".")[0]
@@ -37,7 +28,6 @@ def card(card_id: str | None) -> str:
 
 
 def _rank_value(index: int) -> int:
-    """Points of a rank by position: 0 = low ace (1), 13 = high ace (11), J/Q/K = 10."""
     if index == 0:
         return 1
     if index == 13:
@@ -46,12 +36,11 @@ def _rank_value(index: int) -> int:
 
 
 def meld_points(meld: list[str]) -> int:
-    """Points of a laid-down meld; a joker counts as the card it replaces."""
     codes = [str(c).split(".")[0] for c in meld]
     real = [(i, c[0]) for i, c in enumerate(codes) if c != "JK"]
     if not real:
         return 0
-    if len({r for _, r in real}) == 1:  # set: same rank, an ace is worth 11
+    if len({r for _, r in real}) == 1:
         rank = real[0][1]
         return (11 if rank == "A" else _rank_value(RANKS.index(rank))) * len(codes)
     ace_high = any(r in "QK" for _, r in real)
@@ -64,7 +53,6 @@ def meld_points(meld: list[str]) -> int:
     return sum(_rank_value(start + i) for i in range(len(codes)))
 
 
-# ---------- facts ----------
 def _turn_facts(turns: list[GradedTurn]) -> list[dict]:
     facts = []
     for t in turns:
@@ -168,9 +156,7 @@ def _hint_facts(events: list[Event]) -> list[dict]:
     return facts
 
 
-# ---------- sheet ----------
 def _profile_delta(session: Session, user_id: str, round_id: str, round_end: datetime) -> dict[str, float]:
-    """How much this round moved each dimension's mean."""
     observations = [o for o in load_observations(session, user_id) if o.ts <= round_end or o.ref == round_id]
     mine = [o for o in observations if o.kind == "round" and o.ref == round_id]
     if not mine:
@@ -184,7 +170,6 @@ def _profile_delta(session: Session, user_id: str, round_id: str, round_end: dat
 
 
 def evidence_for(session: Session, user_id: str, round_id: str) -> EvidenceSheet:
-    """Raises LookupError when the user has no events for this round."""
     events = list(session.exec(
         select(Event).where(Event.user_id == user_id, Event.round_id == round_id).order_by(Event.ts, Event.event_id)
     ).all())

@@ -1,4 +1,3 @@
-// First version for task 3.1. Task 3.5 polishes it.
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { deleteData, exportData } from "@/api/client";
@@ -22,9 +21,9 @@ export default function DataPage() {
   };
 
   const remove = async () => {
-    disconnectLive(); // nothing more streams for this user
+    disconnectLive();
     await deleteData(userId!);
-    useMatch.getState().endMatch(); // the running match kept on this device goes too
+    useMatch.getState().endMatch();
     reset();
     navigate("/welcome", { replace: true });
   };

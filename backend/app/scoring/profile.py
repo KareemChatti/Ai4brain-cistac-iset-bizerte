@@ -1,6 +1,3 @@
-"""Profile and history read side. `get_profile` and `recent_round_ids` are also called
-directly by the coach (Member 3), so they open their own database session."""
-
 from datetime import datetime
 
 from sqlalchemy import func
@@ -17,7 +14,6 @@ from app.timeutil import iso, to_utc, utcnow
 
 
 def build_profile(session: Session, user_id: str, now: datetime | None = None) -> Profile:
-    """The twin as it stands now: replay every observation, then drift to `now`."""
     observations = load_observations(session, user_id)
     twin = replay(observations)
     now = to_utc(now or utcnow())
@@ -51,7 +47,6 @@ def get_profile(user_id: str) -> Profile:
 
 
 def recent_round_ids(user_id: str, n: int = 3) -> list[str]:
-    """Ids of the user's last `n` finished rounds, newest first."""
     with session_scope() as session:
         rows = session.exec(
             select(Event.round_id)

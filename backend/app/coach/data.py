@@ -1,12 +1,9 @@
-"""Reads Member 2's data through their functions only. Until those exist, falls back to shared/fixtures/."""
-
 import importlib
 import json
 from pathlib import Path
 from typing import Any, Callable
 
 FIXTURES = Path(__file__).resolve().parents[3] / "shared" / "fixtures"
-# Where Member 2's helpers may live; the first module that has the function wins.
 M2_MODULES = ["app.evidence", "app.scoring.profile", "app.scoring.twin", "app.scoring"]
 
 
@@ -34,7 +31,6 @@ def _fixture(name: str) -> Any:
 
 
 def get_evidence(user_id: str, round_id: str) -> dict:
-    """The evidence sheet for one round. Raises LookupError when the round does not exist."""
     build = _m2("build_evidence")
     if build is None:
         sheet = _fixture("evidence.json")

@@ -1,13 +1,9 @@
-// A playing card: 5 x 7 card stock, rank and suit in two corners, the suit (or the face letter) in the middle.
-// Shared by the table and the coach panels. Styles: src/game/table.css.
-
 import type { CSSProperties } from "react";
 import { parseCard } from "../engine/cards";
 
 const SUIT_NAME: Record<string, string> = { S: "spades", H: "hearts", D: "diamonds", C: "clubs" };
 const RANK_NAME: Record<string, string> = { A: "Ace", T: "10", J: "Jack", Q: "Queen", K: "King" };
 
-/** Suit shapes on a 100 x 100 box, drawn once so they stay crisp at every size. */
 const SUIT_PATH: Record<string, string> = {
   H: "M50 90 C20 66 4 50 4 30 C4 15 16 5 29 5 C39 5 46 11 50 19 C54 11 61 5 71 5 C84 5 96 15 96 30 C96 50 80 66 50 90 Z",
   D: "M50 4 L86 50 L50 96 L14 50 Z",
@@ -60,9 +56,7 @@ export function CardView({
   onClick?: () => void;
   disabled?: boolean;
   className?: string;
-  /** Position in a fan: staggers the deal and tilts the card. */
   index?: number;
-  /** "deal" when the card arrives in a hand, "land" when it lands on a pile. */
   animate?: "deal" | "land";
   style?: CSSProperties;
 }) {

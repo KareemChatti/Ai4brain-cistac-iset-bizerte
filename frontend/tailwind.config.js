@@ -1,5 +1,3 @@
-/** @type {import('tailwindcss').Config} */
-// Every colour, face, radius and shadow is a token from src/tokens.css (Hum).
 const token = (name) => `var(--${name})`;
 
 export default {

@@ -1,8 +1,3 @@
-// The single event logger used by the Rami table and the mini-games.
-// logEvent builds a contract Event (docs/contracts.md section 4), buffers it, and sends
-// batches to POST /api/events every 10 events, at round end (flush) and on page hide.
-// With VITE_USE_MOCK=true the batches are only printed to the console.
-
 import type { Event, EventSource } from "@shared/types";
 
 const USE_MOCK = import.meta.env.VITE_USE_MOCK === "true";
@@ -14,8 +9,6 @@ let context: { userId: string | null; sessionId: string | null } = { userId: nul
 const buffer: Event[] = [];
 const listeners = new Set<(event: Event) => void>();
 
-// Live session (src/game/live.ts): while a socket is attached, events stream through it and
-// wait in `inflight` until the server acknowledges them.
 let transport: ((events: Event[]) => boolean) | null = null;
 const inflight = new Map<string, Event>();
 
@@ -24,7 +17,6 @@ export function attachTransport(send: (events: Event[]) => boolean) {
   void flush();
 }
 
-/** The socket closed: unacknowledged events go back to the buffer for HTTP (duplicates are safe). */
 export function detachTransport() {
   transport = null;
   if (!inflight.size) return;
@@ -37,7 +29,6 @@ export function ackEvents(ids: string[]) {
   for (const id of ids) inflight.delete(id);
 }
 
-/** Watch every event as it is logged (used by tests and the dev pages). Returns an unsubscribe function. */
 export function onEvent(listener: (event: Event) => void): () => void {
   listeners.add(listener);
   return () => listeners.delete(listener);
@@ -78,7 +69,6 @@ export function logEvent(
   return event;
 }
 
-/** Send everything buffered. Failed batches go back to the buffer for the next try. */
 export async function flush(): Promise<void> {
   if (!buffer.length) return;
   const events = buffer.splice(0, buffer.length);
@@ -104,10 +94,8 @@ export async function flush(): Promise<void> {
   }
 }
 
-/** On page hide, hand the rest to the browser with sendBeacon (survives closing the tab). */
 function flushOnHide() {
   if (USE_MOCK || (!buffer.length && !inflight.size)) return;
-  // Streamed events the server has not acknowledged yet are re-sent too; the backend skips duplicates.
   const events = [...inflight.values(), ...buffer.splice(0, buffer.length)];
   const sent = typeof navigator !== "undefined" && navigator.sendBeacon?.(ENDPOINT, JSON.stringify({ events }));
   if (!sent) buffer.unshift(...events);
@@ -115,6 +103,5 @@ function flushOnHide() {
 
 if (typeof window !== "undefined") window.addEventListener("pagehide", flushOnHide);
 
-/** For tests only. */
 export const _buffer = buffer;
 export const _inflight = inflight;

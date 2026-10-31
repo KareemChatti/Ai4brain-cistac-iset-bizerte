@@ -1,9 +1,3 @@
-"""Frustration flag: suggest a short break.
-
-`suggest_break` is true when, in the last round, 3 turns in a row took under 1.5 s and
-scored below 0.4, or the last round was abandoned, or the user lost 3 rounds in a row today.
-"""
-
 from datetime import datetime
 
 from sqlmodel import Session, select

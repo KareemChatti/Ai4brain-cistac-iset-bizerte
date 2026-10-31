@@ -1,5 +1,3 @@
-// Default hint panel, used when the app does not pass its own renderHintPanel.
-
 import type { Hint, HintActions } from "@shared/types";
 import { REASON_TEXT, describeCard } from "../engine/hints";
 

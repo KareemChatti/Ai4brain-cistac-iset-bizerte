@@ -1,5 +1,3 @@
-// Card tracker: what has been discarded, and what the opponent took. Lets the user verify a hint.
-
 import type { GameState } from "../engine";
 import { CardView } from "./Card";
 

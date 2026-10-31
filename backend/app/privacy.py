@@ -1,5 +1,3 @@
-"""We store a nickname only: reject anything that looks like contact details."""
-
 import hashlib
 import re
 

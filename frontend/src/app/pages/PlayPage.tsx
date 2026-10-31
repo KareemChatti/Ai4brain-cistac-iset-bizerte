@@ -7,7 +7,6 @@ import { usePlanRun } from "../planRun";
 import { RamiTable } from "../slots";
 import { PageTitle } from "../ui";
 
-/** Running total against the target: the first to reach it loses. */
 export function MatchScore() {
   const { match, rules } = useMatch();
   if (!rules.matchTarget) return null;
@@ -44,7 +43,6 @@ export default function PlayPage() {
   const inPlan = index >= 0;
 
   const onRoundEnd = (summary: RoundSummary) => {
-    // The review comes right after a round; it offers the next round of the match.
     navigate(`/review/${summary.round_id}`);
   };
 

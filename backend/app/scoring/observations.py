@@ -1,14 +1,3 @@
-"""Turn stored events into 0-100 observations, one per dimension per round or mini-game.
-
-Mini-game observations (noise r = 12) come from each `minigame_end` and the `trial`
-events before it. In-game observations (noise r = 25, noisier because of luck and
-because a round mixes every skill) come from a whole round once its `round_end` is
-stored; the reasoning one improves as `turn_graded` events arrive.
-
-The reference values below are placeholders from the task pack, to be tuned on pilot
-data (docs/scoring.md says so). Pure functions, no database.
-"""
-
 import statistics
 from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
@@ -42,11 +31,11 @@ class EventLike(Protocol):
 @dataclass(frozen=True)
 class Observation:
     dimension: str
-    value: float  # 0-100
-    noise: float  # r, standard deviation of the measurement
+    value: float
+    noise: float
     ts: datetime
-    kind: str  # "minigame" | "round"
-    ref: str  # minigame_end event id, or round id
+    kind: str
+    ref: str
     session_id: str
 
     @property
@@ -59,7 +48,6 @@ def clamp(value: float, low: float = 0.0, high: float = 100.0) -> float:
 
 
 def num(mapping: Any, key: str) -> float | None:
-    """A numeric field, or None if missing or not a number (booleans excluded)."""
     if not isinstance(mapping, dict):
         return None
     value = mapping.get(key)
@@ -73,9 +61,7 @@ def _extras(trials: Sequence[EventLike], key: str) -> list[float]:
     return [v for v in values if v is not None]
 
 
-# ---------- mini-games ----------
 def _card_recall(end: dict, trials: Sequence[EventLike]) -> float | None:
-    """(span reached - 2) / 7 x 100. Span = longest correctly recalled sequence."""
     spans = [
         num(t.payload.get("extra"), "span") or num(t.payload, "level")
         for t in trials
@@ -89,11 +75,6 @@ def _card_recall(end: dict, trials: Sequence[EventLike]) -> float | None:
 
 
 def _meld_spotter(end: dict, trials: Sequence[EventLike]) -> float | None:
-    """(hit rate - false-alarm rate) x 100 + 5 x level.
-
-    Uses trial extras {hits, targets, false_alarms, decoys} when the game sends them,
-    else accuracy as the hit rate and no false alarms.
-    """
     level = num(end, "level_end") or 0.0
     targets, decoys = sum(_extras(trials, "targets")), sum(_extras(trials, "decoys"))
     if targets > 0:
@@ -108,7 +89,6 @@ def _meld_spotter(end: dict, trials: Sequence[EventLike]) -> float | None:
 
 
 def _quick_match(end: dict, trials: Sequence[EventLike]) -> float | None:
-    """Correct answers per minute / 40 x 100."""
     if trials:
         correct = sum(1 for t in trials if t.payload.get("correct") is True)
     else:
@@ -122,7 +102,6 @@ def _quick_match(end: dict, trials: Sequence[EventLike]) -> float | None:
 
 
 def _rami_puzzle(end: dict, trials: Sequence[EventLike]) -> float | None:
-    """accuracy x 60 + level x 4."""
     accuracy, level = num(end, "accuracy"), num(end, "level_end")
     if accuracy is None or level is None:
         return None
@@ -130,7 +109,6 @@ def _rami_puzzle(end: dict, trials: Sequence[EventLike]) -> float | None:
 
 
 def _rule_switch(end: dict, trials: Sequence[EventLike]) -> float | None:
-    """100 - 12 x mean trials needed to adapt after a hidden rule change."""
     adapt = _extras(trials, "trials_to_adapt")
     if not adapt:
         value = num(end.get("extra"), "trials_to_adapt") if isinstance(end.get("extra"), dict) else None
@@ -141,7 +119,6 @@ def _rule_switch(end: dict, trials: Sequence[EventLike]) -> float | None:
 
 
 def _generic(end: dict, trials: Sequence[EventLike]) -> float | None:
-    """A mini-game added later (e.g. for a new dimension): accuracy x 100."""
     accuracy = num(end, "accuracy")
     return None if accuracy is None else accuracy * 100
 
@@ -156,7 +133,6 @@ MINIGAME_SCORERS: dict[str, Callable[[dict, Sequence[EventLike]], float | None]]
 
 
 def minigame_observation(end: EventLike, trials: Sequence[EventLike]) -> Observation | None:
-    """Score one finished mini-game from its `minigame_end` and its `trial` events."""
     game = end.payload.get("game")
     dimension = MINIGAME_DIMENSION.get(game) or end.payload.get("dimension")
     if dimension not in DIMENSIONS:
@@ -168,8 +144,6 @@ def minigame_observation(end: EventLike, trials: Sequence[EventLike]) -> Observa
 
 
 def session_minigame_observations(events: Iterable[EventLike]) -> list[Observation]:
-    """All mini-game observations of one session. Each `minigame_end` takes the trials
-    of the same game logged since the previous end of that game."""
     pending: dict[Any, list[EventLike]] = {}
     observations = []
     for event in sorted(events, key=lambda e: e.ts):
@@ -183,9 +157,7 @@ def session_minigame_observations(events: Iterable[EventLike]) -> list[Observati
     return observations
 
 
-# ---------- Rami rounds ----------
 def round_observations(events: Iterable[EventLike]) -> list[Observation]:
-    """In-game observations of one round. Empty until its `round_end` is stored."""
     events = sorted(events, key=lambda e: e.ts)
     end = next((e for e in events if e.type == "round_end"), None)
     if end is None or end.round_id is None:
@@ -207,7 +179,6 @@ def round_observations(events: Iterable[EventLike]) -> list[Observation]:
 
 
 def _round_memory(events: Sequence[EventLike], turns: list[dict]) -> float | None:
-    """Recall-probe accuracy x 100, minus 10 per discard that fed the opponent."""
     probes = [e.payload.get("correct") is True for e in events if e.type == "recall_probe"]
     if not probes:
         return None
@@ -216,7 +187,6 @@ def _round_memory(events: Sequence[EventLike], turns: list[dict]) -> float | Non
 
 
 def _round_attention(turns: list[dict]) -> float | None:
-    """100 x (1 - missed / (missed + used)) over lay-offs, joker swaps and melds."""
     used = missed = 0.0
     for turn in turns:
         laid_down = turn.get("laid_down")
@@ -231,7 +201,6 @@ def _round_attention(turns: list[dict]) -> float | None:
 
 
 def _round_speed(turns: list[dict]) -> float | None:
-    """100 x clamp(1 - (median think time per option - 300 ms) / 1500)."""
     per_option = []
     for turn in turns:
         think_ms, options = num(turn, "think_ms"), num(turn, "options_count")
@@ -243,7 +212,6 @@ def _round_speed(turns: list[dict]) -> float | None:
 
 
 def _round_reasoning(events: Sequence[EventLike], turns: list[dict]) -> float | None:
-    """Mean decision quality x 100. A `turn_graded` result replaces the turn's own value."""
     quality: dict[Any, float] = {}
     for turn in turns:
         q = num(turn, "quality")
@@ -260,7 +228,6 @@ def _round_reasoning(events: Sequence[EventLike], turns: list[dict]) -> float | 
 
 
 def _round_flexibility(events: Sequence[EventLike]) -> float | None:
-    """100 - 20 x mean turns a stale plan was kept before switching."""
     waited = [num(e.payload, "turns_waited") for e in events if e.type == "plan_switch"]
     waited = [w for w in waited if w is not None]
     if not waited:

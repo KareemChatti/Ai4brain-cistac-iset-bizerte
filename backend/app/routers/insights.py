@@ -1,5 +1,3 @@
-"""Plan, collaboration score, heatmap, goals and the coach's evidence sheet."""
-
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -26,19 +24,16 @@ def _require_user(session: Session, user_id: UUID) -> str:
 
 @router.get("/plan/{user_id}", response_model=Plan, response_model_exclude_none=True)
 def get_plan(user_id: UUID, session: Session = Depends(get_session)) -> Plan:
-    """Today's plan: focus dimension, the reason, opponent level and the steps."""
     return next_plan(session, _require_user(session, user_id))
 
 
 @router.get("/collab/{user_id}", response_model=CollabScore)
 def get_collab(user_id: UUID, session: Session = Depends(get_session)) -> CollabScore:
-    """AI Collaboration Score over the last 10 sessions."""
     return collab_score(session, _require_user(session, user_id))
 
 
 @router.get("/heatmap/{user_id}", response_model=Heatmap)
 def get_heatmap(user_id: UUID, session: Session = Depends(get_session)) -> Heatmap:
-    """Average score per dimension and time of day (Tunisia time)."""
     return build_heatmap(session, _require_user(session, user_id))
 
 
@@ -49,13 +44,11 @@ def get_goals(user_id: UUID, session: Session = Depends(get_session)) -> list[Go
 
 @router.post("/goals/{user_id}", response_model=list[GoalOut])
 def post_goal(user_id: UUID, body: GoalIn, session: Session = Depends(get_session)) -> list[GoalOut]:
-    """Set the goal for one dimension (replaces the previous one for that dimension)."""
     return set_goal(session, _require_user(session, user_id), body.dimension, body.target)
 
 
 @router.get("/evidence/{user_id}/{round_id}", response_model=EvidenceSheet)
 def get_evidence(user_id: UUID, round_id: UUID, session: Session = Depends(get_session)) -> EvidenceSheet:
-    """The facts the coach may use for one round."""
     try:
         return evidence_for(session, _require_user(session, user_id), str(round_id))
     except LookupError:

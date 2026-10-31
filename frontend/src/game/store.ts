@@ -1,7 +1,3 @@
-// One Rami round: a Zustand store wrapping the engine. The user is player 0 (15 cards,
-// starts by discarding); the AI is player 1. Every action logs the events of
-// docs/contracts.md section 4. No rules live here: they are all in src/engine.
-
 import { createStore } from "zustand/vanilla";
 import type { Hint, RoundSummary } from "@shared/types";
 import {
@@ -45,14 +41,10 @@ export type RoundOptions = {
   opponentLevel: number;
   quickMode: boolean;
   hintsEnabled: boolean;
-  /** House rules for this round; when missing, quickMode picks the standard or quick rules. */
   config?: GameConfig;
-  /** Coach checks during the user's turn (engine/coach.ts). */
   liveCoach?: boolean;
-  /** The match this round belongs to (asked once, when the round starts). */
   matchId?: () => string | null;
   seed?: number;
-  /** Pause between the AI's moves, so the user can follow them. */
   aiDelayMs?: number;
 };
 
@@ -72,9 +64,7 @@ export type RoundView = {
   probe: Probe | null;
   userTurn: number;
   liveCoach: boolean;
-  /** What the live coach can prove right now. */
   alerts: CoachAlert[];
-  /** A discard waiting for "Discard anyway", with the alerts it would ignore. */
   confirm: { cardId: string; alerts: CoachAlert[] } | null;
   result: { summary: RoundSummary; penalties: [number, number]; grading: boolean } | null;
 };
@@ -129,7 +119,6 @@ export function createRoundStore(opts: RoundOptions) {
   const log = (source: "rami" | "coach", type: string, payload: Record<string, unknown>) =>
     logEvent(source, type, payload, roundId);
 
-  // Turn bookkeeping that the screen does not need to re-render on.
   const t = {
     started: false,
     startedAt: 0,
@@ -154,7 +143,6 @@ export function createRoundStore(opts: RoundOptions) {
   return createStore<RoundStore>()((set, get) => {
     const game = () => get().game;
 
-    // ---------------- live coach ----------------
     const selectedCard = (): Card | null => {
       const { selected } = get();
       if (selected.length !== 1) return null;
@@ -169,7 +157,6 @@ export function createRoundStore(opts: RoundOptions) {
       set({ alerts });
     };
 
-    /** One coach_alert event per kind seen this turn; `followed` = the user acted on it before ending the turn. */
     const logAlerts = (turnNo: number, before: GameState, discarded: string | null) => {
       if (!t.alertsSeen.size) return;
       const still = new Set(coachAlerts(before, 0, null).map((a) => a.kind));
@@ -205,7 +192,6 @@ export function createRoundStore(opts: RoundOptions) {
       return !s.result && !s.aiThinking && !s.probe && s.game.current === 0 && s.game.phase !== "over";
     };
 
-    // ---------------- hints ----------------
     const activeHint = () => t.hints.find((h) => !h.resolved && h.turnNo === get().userTurn) ?? null;
     const resolveHint = (kind: "draw" | "lay_down" | "discard", detail?: { action?: string; card?: string }) => {
       const record = activeHint();
@@ -223,7 +209,6 @@ export function createRoundStore(opts: RoundOptions) {
       set({ hint: null, showWhy: false });
     };
 
-    // ---------------- turns ----------------
     const beginUserTurn = () => {
       const userTurn = get().userTurn + 1;
       Object.assign(t, { drawSource: "stock", drawn: "", laidDown: [], laidOff: 0, jokerSwaps: 0 });
@@ -274,7 +259,6 @@ export function createRoundStore(opts: RoundOptions) {
       };
     };
 
-    /** Partial melds left in hand: pairs toward runs vs toward sets. */
     const partials = (hand: Card[]) => {
       const loose = findMelds(hand).deadwood.filter((c) => !c.joker);
       let run = 0;
@@ -303,7 +287,6 @@ export function createRoundStore(opts: RoundOptions) {
       t.plan = now;
     };
 
-    // ---------------- AI ----------------
     const aiStep = (first: boolean) => {
       const s = game();
       if (s.phase === "over" || s.current !== 1) return;
@@ -368,7 +351,6 @@ export function createRoundStore(opts: RoundOptions) {
       t.timers.push(setTimeout(() => aiStep(true), aiDelay));
     };
 
-    // ---------------- end of round ----------------
     const endRound = () => {
       if (get().result) return;
       const g = game();
@@ -402,7 +384,6 @@ export function createRoundStore(opts: RoundOptions) {
           log("coach", "hint_outcome", { hint_id: h.hint.hint_id, was_good: hintWasGood(h.hint.card!, grade) });
         }
       }).then(() => {
-        // Hints that were not about a graded discard (draws, lay-downs) are counted as good advice.
         for (const h of t.hints.filter((x) => !(x.hint.action === "discard" && graded.has(x.turnNo)))) {
           log("coach", "hint_outcome", { hint_id: h.hint.hint_id, was_good: h.hint.action !== "discard" });
         }
@@ -535,7 +516,6 @@ export function createRoundStore(opts: RoundOptions) {
         const before = game();
         const turnNo = get().userTurn;
         if (liveCoach && !force) {
-          // Show what the coach can prove before the discard goes through; the user decides.
           const card = before.hands[0].find((c) => c.id === id) ?? null;
           const alerts = coachAlerts(before, 0, card);
           if (alerts.length) {
@@ -668,5 +648,4 @@ export function createRoundStore(opts: RoundOptions) {
   });
 }
 
-/** The user's hand in display order. */
 export const sortedHand = (s: RoundView) => sortHand(s.game.hands[0], s.sortBy);

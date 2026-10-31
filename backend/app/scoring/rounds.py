@@ -1,5 +1,3 @@
-"""Read helpers for Rami rounds, shared by the plan, frustration and evidence code."""
-
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -20,7 +18,6 @@ class RoundResult:
 
 
 def finished_rounds(session: Session, user_id: str) -> list[RoundResult]:
-    """The user's finished rounds, oldest first."""
     return [
         RoundResult(
             round_id=e.round_id, session_id=e.session_id, ts=e.ts,
@@ -46,7 +43,6 @@ class GradedTurn:
 
 
 def graded_turns(events: list[Event]) -> list[GradedTurn]:
-    """Turns of one round in order, with `turn_graded` results merged over the turn's own values."""
     turns: dict[int, dict] = {}
     for e in sorted(events, key=lambda e: e.ts):
         turn_no = e.payload.get("turn_no")
@@ -61,7 +57,6 @@ def graded_turns(events: list[Event]) -> list[GradedTurn]:
 
 
 def fast_and_wrong_runs(turns: list[GradedTurn], max_ms: float, max_quality: float, min_len: int = 3) -> list[list[GradedTurn]]:
-    """Runs of at least `min_len` consecutive turns that were both quick and weak."""
     runs, current = [], []
     for t in turns:
         if t.think_ms is not None and t.quality is not None and t.think_ms < max_ms and t.quality < max_quality:

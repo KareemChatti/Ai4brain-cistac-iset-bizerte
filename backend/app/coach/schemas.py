@@ -1,5 +1,3 @@
-"""Pydantic models for the coach, matching docs/contracts.md section 6 (Review, Hint)."""
-
 from typing import Literal, Optional
 
 from pydantic import BaseModel, Field
@@ -44,7 +42,6 @@ class Hint(BaseModel):
     reason_codes: list[str] = []
 
 
-# ---------- request / response bodies ----------
 class ReviewRequest(BaseModel):
     user_id: str
     round_id: str
@@ -73,7 +70,6 @@ class ChatResponse(BaseModel):
     contains_personal_data: bool = False
 
 
-# ---------- what the LLM must return for hints and chat ----------
 class HintText(BaseModel):
     text: str
 
@@ -84,7 +80,6 @@ class ChatAnswer(BaseModel):
 
 
 class ReviewDraft(BaseModel):
-    """What the LLM writes; the router adds round_id and source."""
 
     headline: str
     key_moments: list[KeyMoment]

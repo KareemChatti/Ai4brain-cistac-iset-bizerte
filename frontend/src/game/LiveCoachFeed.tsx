@@ -1,5 +1,3 @@
-// The live session on the table: a connection chip and the coach's messages for this round.
-
 import { useRef } from "react";
 import { useLive } from "./live";
 
@@ -9,7 +7,6 @@ const BADGE = {
   offline: { tone: "bg-muted", text: "Offline: your moves are kept and sent when the connection is back" },
 } as const;
 
-/** A live state chip: the dot is the connection state, so it carries meaning. */
 export function LiveBadge() {
   const status = useLive((s) => s.status);
   if (status === "off") return null;
@@ -22,7 +19,6 @@ export function LiveBadge() {
   );
 }
 
-/** The last few coach messages of this round (and match summaries that arrive during it). */
 export function LiveCoachFeed({ roundId, max = 3 }: { roundId: string; max?: number }) {
   const since = useRef(Date.now());
   const messages = useLive((s) => s.messages);

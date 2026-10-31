@@ -1,8 +1,5 @@
-"""Reviews and hint explanations built without the LLM. Used when the API is down, slow or off."""
-
 from .schemas import KeyMoment, NextFocus, Review, Strength
 
-# Order of importance for key moments: the first three come first, as the task pack asks.
 NEGATIVE_KINDS = [
     "low_quality_discard",
     "fed_opponent",

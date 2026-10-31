@@ -1,5 +1,3 @@
-"""Events in -> Brain Twin out, through the real API and database."""
-
 import uuid
 from datetime import UTC, datetime, timedelta
 
@@ -14,7 +12,6 @@ def profile(client, user_id=FIXTURE_USER):
 
 
 def minigame(user_id, value_span, ts, session_id=None):
-    """A card_recall game: one correct trial at `value_span`, then its end."""
     session_id = session_id or str(uuid.uuid4())
     common = {"user_id": user_id, "session_id": session_id, "source": "minigame"}
     return [
@@ -92,7 +89,7 @@ def test_late_turn_graded_updates_reasoning(client, batch):
 
     assert before["n_obs"] == 0
     assert after["n_obs"] == 1
-    assert after["score"] < 50  # quality 0.31
+    assert after["score"] < 50
 
 
 def test_history_has_one_snapshot_per_game_and_round(client, batch):

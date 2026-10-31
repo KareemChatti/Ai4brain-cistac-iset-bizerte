@@ -1,5 +1,3 @@
-// Mock backend for VITE_USE_MOCK=true. Answers come from shared/fixtures/, which follow docs/contracts.md.
-
 import collab from "@shared/fixtures/collab.json";
 import evidence from "@shared/fixtures/evidence.json";
 import heatmap from "@shared/fixtures/heatmap.json";
@@ -15,7 +13,6 @@ export const MOCK_DELAY_MS = 300;
 const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// Goals have no fixture, so mock mode keeps them in memory.
 let goals: Goal[] = [];
 
 export function resetMock() {
@@ -25,7 +22,7 @@ export function resetMock() {
 function route(method: string, path: string, body: any): unknown {
   const [pathname, query = ""] = path.split("?");
   const params = new URLSearchParams(query);
-  const parts = pathname.split("/").filter(Boolean); // ["api", ...]
+  const parts = pathname.split("/").filter(Boolean);
   const key = `${method} /${parts.slice(0, 2).join("/")}`;
 
   switch (key) {

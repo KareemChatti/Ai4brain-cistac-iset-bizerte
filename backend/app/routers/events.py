@@ -1,5 +1,3 @@
-"""POST /api/events: store a batch of events from the frontend, ignoring duplicates."""
-
 import logging
 from collections import defaultdict
 from typing import Any
@@ -22,23 +20,11 @@ router = APIRouter(prefix="/api", tags=["events"])
 
 @router.post("/events", response_model=EventsAccepted)
 def post_events(batch: EventBatch, session: Session = Depends(get_session)) -> EventsAccepted:
-    """Store a batch of events.
-
-    The whole batch is validated first; one malformed event rejects the batch with 422
-    so contract mismatches surface during development. Re-sending events is safe:
-    an `event_id` already stored is skipped. `accepted` counts every valid event in
-    the batch, new or already stored, so the client can drop all of them from its buffer.
-    Events of a user who deleted their data are dropped.
-    """
     ingest(session, batch.events)
     return EventsAccepted(accepted=len(batch.events))
 
 
 def ingest(session: Session, events: list[EventIn]) -> list[EventIn]:
-    """Store events (skipping duplicates), then score them. Shared by HTTP and the live socket.
-
-    Returns the events that were new.
-    """
     new_events = store_events(session, events)
     by_user: dict[str, list[EventIn]] = defaultdict(list)
     for event in new_events:
@@ -46,13 +32,12 @@ def ingest(session: Session, events: list[EventIn]) -> list[EventIn]:
     for user_id, user_events in by_user.items():
         try:
             pipeline.on_new_events(user_id, user_events)
-        except Exception:  # the events are stored; scoring can be replayed later
+        except Exception:
             log.exception("Scoring pipeline failed for user %s", user_id)
     return new_events
 
 
 def store_events(session: Session, events: list[EventIn]) -> list[EventIn]:
-    """Insert the events not stored yet and return them, in batch order."""
     unique: dict[str, EventIn] = {}
     for event in events:
         unique.setdefault(str(event.event_id), event)
@@ -98,7 +83,6 @@ def _row(event: EventIn, received_at: Any) -> dict[str, Any]:
 
 
 def _insert_ignore(session: Session, table: Table, rows: list[dict[str, Any]], key: str) -> None:
-    """INSERT that silently skips rows whose key already exists (safe under concurrent requests)."""
     dialect = session.get_bind().dialect.name
     if dialect == "sqlite":
         stmt = sqlite.insert(table).on_conflict_do_nothing(index_elements=[key])

@@ -1,17 +1,3 @@
-"""Simulated demo players, so the dashboard is not empty in the demo.
-
-Two players are generated and posted through the real pipeline (`ingest`, the same path
-as the live game), so their profile, history, projection, matches, collaboration score
-and evidence sheets are genuine outputs of the system:
-
-- "Demo improver (simulated)": three weeks of matches to 401, getting slowly better at
-  reasoning, memory and flexibility, relying less on hints and following more coach tips.
-- "Demo newcomer (simulated)": two short recent sessions ("still learning about you").
-
-Their events are synthetic but follow the contract exactly. Both users are marked
-`is_demo` and their nickname says "simulated". Run:  python -m scripts.seed_demo [--reset]
-"""
-
 import random
 import uuid
 from dataclasses import dataclass
@@ -35,9 +21,9 @@ RULES = {"decks": 2, "jokers": 4, "hand_size": 14, "opening_min": 71, "opponent_
 class DemoPlayer:
     key: str
     nickname: str
-    days: int  # how far back the history starts
+    days: int
     sessions: int
-    skill_start: float  # 0..1
+    skill_start: float
     skill_end: float
 
     @property
@@ -50,12 +36,11 @@ DEMO_PLAYERS = (
     DemoPlayer("demo-newcomer", "Demo newcomer (simulated)", days=2, sessions=2, skill_start=0.35, skill_end=0.4),
 )
 
-LOCAL_HOURS = (9, 13, 18, 21)  # sessions spread over the day, for the heatmap
-TUNIS_OFFSET = timedelta(hours=1)  # Africa/Tunis is UTC+1
+LOCAL_HOURS = (9, 13, 18, 21)
+TUNIS_OFFSET = timedelta(hours=1)
 
 
 class _Builder:
-    """Builds contract events for one player, with deterministic ids."""
 
     def __init__(self, player: DemoPlayer, rng: random.Random):
         self.p = player
@@ -82,7 +67,6 @@ class _Builder:
         return self.rng.random() < max(0.0, min(1.0, p))
 
     def play_round(self, start: datetime, skill: float, match_id: str | None) -> tuple[datetime, int, int, str]:
-        """One round; returns its end time, both penalties and the winner."""
         rid = self.uid("round")
         t = start
         self.emit(t, "rami", "round_start", {
@@ -94,7 +78,6 @@ class _Builder:
         qualities: list[tuple[int, float, str]] = []
         for k in range(1, turns + 1):
             t += timedelta(seconds=self.rng.randint(15, 45))
-            # Weaker players think in bursts: some very fast discards.
             think = self.rng.randint(700, 1400) if self.chance(0.25 - 0.18 * skill) else self.rng.randint(2500, 9000)
             missed_lay = 1 if opened_at and k > opened_at and self.chance(0.35 - 0.3 * skill) else 0
             discarded, best = self.card(), self.card()
@@ -121,7 +104,7 @@ class _Builder:
                     "kind": "missed_lay_off", "turn_no": k, "cards": [discarded.split(".")[0]],
                     "followed": self.chance(0.35 + 0.5 * skill),
                 }, rid)
-            if self.chance(0.32 - 0.22 * skill):  # hints: fewer as the player gets better
+            if self.chance(0.32 - 0.22 * skill):
                 hid = self.uid("hint")
                 good = self.chance(0.75)
                 self.emit(t - timedelta(seconds=8), "coach", "hint_requested",
@@ -159,7 +142,6 @@ class _Builder:
 
 
 def build_demo_events(player: DemoPlayer, now: datetime | None = None, seed: int = 2026) -> list[dict]:
-    """All the events of one demo player, oldest first."""
     now = now or utcnow()
     rng = random.Random(f"{seed}:{player.key}")
     b = _Builder(player, rng)
@@ -194,7 +176,6 @@ def build_demo_events(player: DemoPlayer, now: datetime | None = None, seed: int
 
 
 def seed_demo(reset: bool = False, now: datetime | None = None) -> dict[str, int]:
-    """Create the demo players (skipped if they exist, unless reset). Returns events stored per player."""
     stored: dict[str, int] = {}
     for player in DEMO_PLAYERS:
         with session_scope() as session:
@@ -204,7 +185,6 @@ def seed_demo(reset: bool = False, now: datetime | None = None) -> dict[str, int
             if existing:
                 delete_user_data(session, player.user_id)
                 session.commit()
-            # A reset leaves a tombstone, which would drop the new events: clear it for demo players.
             tomb = session.get(DeletedUser, user_hash(player.user_id))
             if tomb:
                 session.delete(tomb)
@@ -216,7 +196,6 @@ def seed_demo(reset: bool = False, now: datetime | None = None) -> dict[str, int
             ))
             session.commit()
         events = [EventIn.model_validate(e) for e in build_demo_events(player, now)]
-        # Post session by session, like a real player, so the pipeline scores as it goes.
         by_session: dict[str, list[EventIn]] = {}
         for e in events:
             by_session.setdefault(str(e.session_id), []).append(e)

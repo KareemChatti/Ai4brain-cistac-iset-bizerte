@@ -1,23 +1,3 @@
-"""Live session: WebSocket /ws/session/{user_id}.
-
-While a match is played, the table streams every event here the moment it happens
-(instead of HTTP batches of 10). The server stores and scores them exactly like
-POST /api/events, then answers on the same socket:
-
-    client -> server   {"type": "events", "events": [Event, ...]}   (contract section 4)
-                       {"type": "ping"}
-    server -> client   {"type": "hello", "user_id": ...}             once, on connect
-                       {"type": "ack", "event_ids": [...]}           the events are stored
-                       {"type": "coach", "kind": ..., "text": ..., "turn_no": ..., "round_id": ...}
-                       {"type": "profile", "profile": Profile}       after a round is scored
-                       {"type": "pong"} / {"type": "error", "message": ...}
-
-The live coach here complements the table's own checks (src/engine/coach.ts): those
-prove facts about the cards on screen; these come from the stored history and the
-Brain Twin (pace across turns, what fed the opponent, how the profile moved).
-Messages describe moves, never the person, and use no clinical words.
-"""
-
 import logging
 from dataclasses import dataclass, field
 from uuid import UUID
@@ -45,7 +25,6 @@ LABELS = {d: d.capitalize() for d in DIMENSIONS}
 
 @dataclass
 class LiveState:
-    """What the coach remembers during one connection."""
 
     fast_streak: int = 0
     ignored: dict[str, int] = field(default_factory=dict)
@@ -66,7 +45,6 @@ def _coach(kind: str, text: str, event: EventIn) -> dict:
 
 
 def profile_change(before: Profile | None, after: Profile | None) -> str | None:
-    """'Memory 52 → 55, Reasoning 61 → 59' for the dimensions that moved, or None."""
     if not before or not after:
         return None
     moves = []
@@ -78,7 +56,6 @@ def profile_change(before: Profile | None, after: Profile | None) -> str | None:
 
 
 def live_messages(state: LiveState, events: list[EventIn], before: Profile | None, after: Profile | None) -> list[dict]:
-    """Coach messages for newly stored events. Pure, so it is easy to test."""
     out: list[dict] = []
     for e in sorted(events, key=lambda x: x.ts):
         p = e.payload
@@ -128,7 +105,6 @@ def live_messages(state: LiveState, events: list[EventIn], before: Profile | Non
 
 
 def handle_events(user_id: str, events: list[EventIn], state: LiveState) -> list[dict]:
-    """Store and score a batch like POST /api/events, then build the replies."""
     scoring = any(e.type in SCORING_EVENTS for e in events)
     with session_scope() as session:
         known = session.get(User, user_id) is not None
@@ -151,7 +127,6 @@ async def live_session(websocket: WebSocket, user_id: str) -> None:
     except ValueError:
         await websocket.close(code=1008)
         return
-    # Browsers always send Origin: only the app's own pages may open a session.
     if origin and origin not in settings.cors_origins:
         await websocket.close(code=1008)
         return

@@ -10,7 +10,7 @@ describe("match to a target", () => {
   it("adds penalties until someone reaches the target, and that player loses", () => {
     const { recordRound } = useMatch.getState();
     recordRound({ round_id: "r1", user: 0, ai: 250, winner: "user" });
-    recordRound({ round_id: "r1", user: 0, ai: 250, winner: "user" }); // counted once
+    recordRound({ round_id: "r1", user: 0, ai: 250, winner: "user" });
     expect(useMatch.getState().match).toMatchObject({ totals: [0, 250], winner: null });
     recordRound({ round_id: "r2", user: 40, ai: 160, winner: "user" });
     expect(useMatch.getState().match).toMatchObject({ totals: [40, 410], winner: "user" });

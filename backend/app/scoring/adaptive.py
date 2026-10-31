@@ -1,14 +1,3 @@
-"""Today's plan: what to train next and at which level.
-
-- Focus: the dimension with the highest need = (100 - mu) + 0.5 x (high - low), so both
-  weak and uncertain skills get trained.
-- Steps: Rami rounds only (the mini-games were removed): one round, and the reason says
-  which skill the round should focus on.
-- Opponent level (1-5): starts at 2, +1 after 2 wins in a row, -1 after 2 losses in a row,
-  and -1 for the next round when a break was suggested.
-- Quick round when the user's last 3 sessions were each shorter than 10 minutes (and for new users).
-"""
-
 from datetime import timedelta
 
 from sqlmodel import Session
@@ -19,7 +8,6 @@ from app.scoring.history import recent_session_ids, user_events
 from app.scoring.profile import build_profile
 from app.scoring.rounds import finished_rounds
 
-# What to watch in the round to train each skill.
 IN_THE_ROUND = {
     "memory": "In this round, keep track of the cards your opponent picks up and discards.",
     "attention": "In this round, look for lay-offs and joker swaps before every discard.",
@@ -38,7 +26,6 @@ def need(estimate) -> float:
 
 
 def opponent_level(results: list[bool]) -> int:
-    """Replay win/loss results (True = win) through the 2-in-a-row rule."""
     level, streak_wins, streak_losses = START_LEVEL, 0, 0
     for won in results:
         streak_wins, streak_losses = (streak_wins + 1, 0) if won else (0, streak_losses + 1)

@@ -22,7 +22,6 @@ def load_fixture(name: str):
 
 @pytest.fixture
 def client() -> Iterator[TestClient]:
-    """API client on a fresh in-memory database."""
     db.configure("sqlite://")
     with TestClient(app) as test_client:
         yield test_client
@@ -30,7 +29,6 @@ def client() -> Iterator[TestClient]:
 
 @pytest.fixture
 def batch() -> dict:
-    """The 18-event round from shared/fixtures/events-round.json (a fresh copy per test)."""
     return copy.deepcopy(load_fixture("events-round.json"))
 
 

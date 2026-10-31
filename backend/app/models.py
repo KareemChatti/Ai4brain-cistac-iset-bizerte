@@ -1,10 +1,3 @@
-"""Database tables.
-
-Every table that holds a user's data has a `user_id` column. Export and delete
-find those tables automatically (see `app/routers/data.py`), so a new table, such
-as the coach's cached reviews, is covered as long as it has a `user_id` column.
-"""
-
 from datetime import datetime
 from typing import Any
 
@@ -43,11 +36,6 @@ class Event(SQLModel, table=True):
 
 
 class Observation(SQLModel, table=True):
-    """One 0-100 measurement of one dimension, derived from a round or a mini-game.
-
-    Kept separately from raw events so the Brain Twin survives event retention
-    (raw events are deleted after RETENTION_DAYS, these derived scores are not).
-    """
 
     __tablename__ = "observations"
     __table_args__ = (
@@ -57,9 +45,9 @@ class Observation(SQLModel, table=True):
 
     id: int | None = Field(default=None, primary_key=True)
     user_id: str = Field(foreign_key="users.user_id", max_length=36)
-    source_key: str = Field(max_length=128)  # "<kind>:<ref>:<dimension>"
-    kind: str = Field(max_length=16)  # "round" | "minigame"
-    ref: str = Field(index=True, max_length=36)  # round id, or minigame_end event id
+    source_key: str = Field(max_length=128)
+    kind: str = Field(max_length=16)
+    ref: str = Field(index=True, max_length=36)
     session_id: str = Field(max_length=36)
     dimension: str = Field(max_length=16)
     value: float
@@ -74,7 +62,7 @@ class Snapshot(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     user_id: str = Field(foreign_key="users.user_id", max_length=36)
     ts: datetime
-    trigger: str = Field(max_length=16)  # "round" | "minigame"
+    trigger: str = Field(max_length=16)
     dimensions: dict[str, Any] = Field(sa_column=Column(JSON, nullable=False))
 
 
@@ -86,14 +74,10 @@ class Goal(SQLModel, table=True):
     dimension: str = Field(max_length=16)
     target: float
     created_at: datetime = Field(default_factory=utcnow)
-    baseline: float | None = None  # posterior mean when the goal was set, for progress
+    baseline: float | None = None
 
 
 class DeletedUser(SQLModel, table=True):
-    """Tombstone so late events (e.g. a beacon sent after "delete my data") are dropped.
-
-    Only a SHA-256 hash of the user id is kept, nothing that identifies the person.
-    """
 
     __tablename__ = "deleted_users"
 

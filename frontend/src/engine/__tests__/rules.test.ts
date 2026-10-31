@@ -5,7 +5,6 @@ import { GameState, newGame } from "../state";
 
 const c = (...ids: string[]) => ids.map((id) => parseCard(id.includes(".") ? id : `${id}.1`));
 
-/** A hand-made position: player 0 to play, in the given phase. */
 function position(
   hand0: string[],
   { hand1 = ["2C", "3D", "4S"], discard = [], ...rest }: Partial<Omit<GameState, "discard">> & { hand1?: string[]; discard?: string[] } = {},
@@ -27,7 +26,7 @@ describe("dealing", () => {
     expect(s.hands[0]).toHaveLength(15);
     expect(s.hands[1]).toHaveLength(14);
     expect(s.stock.length + 29).toBe(108);
-    expect(s.phase).toBe("play"); // the first player starts by discarding
+    expect(s.phase).toBe("play");
   });
   it("replays the same deal from the same seed", () => {
     expect(newGame(7, FULL_CONFIG).hands[0].map((x) => x.id)).toEqual(newGame(7, FULL_CONFIG).hands[0].map((x) => x.id));
@@ -95,7 +94,6 @@ describe("after opening", () => {
     expect(() => applyAction(s, { type: "discard", cardId: "2S.1" })).not.toThrow();
   });
   it("refuses a swap whose joker could not be used", () => {
-    // After the swap the set KS-KH-KD-KC is full and 2S, 8H make nothing with a joker.
     const s = opened(["KC", "2S", "8H"], [["KS", "KH", "KD", "JK.1"]]);
     expect(() => applyAction(s, { type: "swapJoker", cardId: "KC.1", meldId: 1 })).toThrow(/joker/);
   });
@@ -120,14 +118,12 @@ describe("going out and penalties", () => {
   });
 });
 
-/** Play a whole round choosing random legal actions. */
 function randomRound(seed: number, quick: boolean): GameState {
   const rng = mulberry32(seed * 31 + 1);
   let s = newGame(seed, quick ? QUICK_CONFIG : FULL_CONFIG, (seed % 2) as 0 | 1);
   for (let steps = 0; steps < 5000 && s.phase !== "over"; steps++) {
     const actions = legalActions(s);
     expect(actions.length).toBeGreaterThan(0);
-    // Prefer progress so random rounds finish: lay down > lay off > discard.
     const pick = (type: Action["type"]) => actions.filter((a) => a.type === type);
     const options = pick("layDown").length ? pick("layDown") : rng() < 0.7 && pick("layOff").length ? pick("layOff") : actions;
     s = applyAction(s, options[Math.floor(rng() * options.length)]);

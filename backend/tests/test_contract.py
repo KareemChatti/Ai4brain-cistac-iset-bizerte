@@ -1,5 +1,3 @@
-"""The Pydantic schemas must accept every sample in shared/fixtures/ (the contract in data)."""
-
 import pytest
 from pydantic import TypeAdapter
 
@@ -35,7 +33,6 @@ def test_health(client):
 
 
 def test_server_starts_without_the_coach(client):
-    """app/coach/ is empty until Member 3 delivers; the rest of the API must still work."""
     paths = client.get("/openapi.json").json()["paths"]
 
     assert "/api/events" in paths

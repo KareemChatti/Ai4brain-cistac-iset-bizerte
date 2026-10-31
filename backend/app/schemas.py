@@ -1,5 +1,3 @@
-"""Request and response shapes. Mirrors docs/contracts.md sections 4-6 and shared/types.ts."""
-
 from typing import Any, Literal
 from uuid import UUID
 
@@ -18,7 +16,6 @@ class Strict(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
-# ---------- events ----------
 class EventIn(Strict):
     event_id: UUID
     user_id: UUID
@@ -38,7 +35,6 @@ class EventsAccepted(BaseModel):
     accepted: int
 
 
-# ---------- users and consent ----------
 class UserCreate(Strict):
     nickname: str = Field(min_length=1, max_length=32)
 
@@ -66,7 +62,6 @@ class Deleted(BaseModel):
     deleted: bool = True
 
 
-# ---------- Brain Twin ----------
 class DimensionEstimate(BaseModel):
     score: float
     low: float
@@ -152,7 +147,6 @@ class GoalOut(BaseModel):
     progress: float
 
 
-# ---------- evidence sheet (read by the coach) ----------
 class Fact(BaseModel):
     id: str
     dimension: DimensionKey | Literal["general"]
@@ -171,7 +165,6 @@ class EvidenceSheet(BaseModel):
     profile_delta: dict[DimensionKey, float]
 
 
-# ---------- matches ----------
 class MatchRound(BaseModel):
     round_id: str
     user_penalty: int

@@ -1,11 +1,3 @@
-// The AI opponent, levels 1-5. It only uses what a real player sees (viewOf).
-//   1  random legal discard
-//   2  greedy: takes the discard only if it completes a meld, lays down as soon as legal,
-//      discards the highest card that is in no meld and near no meld
-//   3  level 2 + memory: avoids discards that help the opponent (cards they collected, table melds)
-//   4  level 3 + one-step lookahead: expected distance to going out over every possible next draw
-//   5  Monte Carlo: plays out sampled futures for the best level-4 candidates
-
 import { Card, penaltyPoints, shuffle } from "./cards";
 import { Evaluator, View, discardCandidates, drawDistribution, expectedDistance, isDangerous, viewOf } from "./eval";
 import { canLayOff, findMelds, isNearMeld, jokerStandsFor, meldsContaining } from "./melds";
@@ -25,7 +17,6 @@ function chooseDraw(state: GameState, level: Level): Action {
   if (level >= 2 && top && canUseCard(state, p, top)) {
     const view = viewOf(state, p);
     const ev = new Evaluator(view.table, view.opened, view.config);
-    // Take it only when it actually brings us closer to going out.
     if (ev.distance([...view.hand, top]) < ev.distance(view.hand)) return { type: "drawDiscard" };
   }
   return { type: "drawStock" };
@@ -36,14 +27,12 @@ function choosePlay(state: GameState, level: Level, rng: Rng): Action {
   const hand = state.hands[p];
   const opened = state.opened[p];
 
-  // 1. Lay down: the opening as soon as it is legal, then any new meld.
   const best = findMelds(hand, opened ? "deadwood" : "opening");
   if (best.melds.length && (opened || best.meldPoints >= state.config.openingMin)) {
     const action: Action = { type: "layDown", melds: best.melds.map((m) => m.map((c) => c.id)) };
     if (tryAction(state, action)) return action;
   }
 
-  // A card taken from the discard pile still waiting: put it in a meld or on the table.
   for (const id of state.mustUse) {
     const card = hand.find((c) => c.id === id);
     if (!card) continue;
@@ -57,16 +46,14 @@ function choosePlay(state: GameState, level: Level, rng: Rng): Action {
   }
 
   if (opened) {
-    // 2. Lay off whatever fits the table.
     for (const card of hand) {
-      if (hand.length === 1 && level >= 2) break; // keep the last card to go out by discarding it
+      if (hand.length === 1 && level >= 2) break;
       const target = state.table.find((m) => canLayOff(card, m.cards));
       if (target) {
         const action: Action = { type: "layOff", cardId: card.id, meldId: target.id };
         if (tryAction(state, action)) return action;
       }
     }
-    // 3. Swap a table joker when the joker can be used right away.
     if (level >= 3) {
       for (const meld of state.table) {
         if (!meld.cards.some((c) => c.joker)) continue;
@@ -97,7 +84,6 @@ function tryAction(state: GameState, action: Action): boolean {
   }
 }
 
-/** Greedy keep value: cards in melds are kept, near-meld cards next, high isolated cards go first. */
 function greedyScore(card: Card, hand: Card[], meldIds: Set<string>): number {
   if (card.joker) return 1000;
   if (meldIds.has(card.id)) return 500;
@@ -134,7 +120,6 @@ export function chooseDiscard(state: GameState, level: Level, rng: Rng): Card {
   return monteCarlo(view, ranked.slice(0, 4), rng);
 }
 
-/** Level-4 scores: expected distance after the next draw, plus a small penalty for feeding the opponent. */
 export function rankByLookahead(view: View, candidates: Card[]): { card: Card; score: number }[] {
   const ev = new Evaluator(view.table, view.opened, view.config);
   const draws = drawDistribution(view.unseen);
@@ -143,7 +128,6 @@ export function rankByLookahead(view: View, candidates: Card[]): { card: Card; s
     .sort((a, b) => a.score - b.score || penaltyPoints(b.card) - penaltyPoints(a.card));
 }
 
-/** Level 5: sample futures and count the turns needed to go out, playing greedily. */
 function monteCarlo(view: View, ranked: { card: Card; score: number }[], rng: Rng, samples = 24, horizon = 8): Card {
   const ev = new Evaluator(view.table, view.opened, view.config);
   let best = ranked[0];
@@ -174,7 +158,6 @@ function monteCarlo(view: View, ranked: { card: Card; score: number }[], rng: Rn
   return best.card;
 }
 
-/** Play the current player's whole turn; returns every action taken, in order. */
 export function playTurn(state: GameState, level: Level, rng: Rng): { state: GameState; actions: Action[] } {
   const player = state.current;
   const actions: Action[] = [];
@@ -184,7 +167,6 @@ export function playTurn(state: GameState, level: Level, rng: Rng): { state: Gam
     try {
       s = applyAction(s, action);
     } catch {
-      // Never get stuck: fall back to a legal move (place a waiting card first, else discard).
       const legal = legalActions(s);
       action =
         legal.find((a) => a.type === "layDown" || a.type === "layOff") ??

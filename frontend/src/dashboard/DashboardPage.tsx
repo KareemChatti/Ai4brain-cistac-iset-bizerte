@@ -1,5 +1,3 @@
-// The Brain Twin dashboard (task 3.4): every score with its range, the trend over time, a what-if
-// projection (always with its disclaimer), the match history and the AI Collaboration Score.
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -23,7 +21,6 @@ import { useApp } from "@/app/store";
 import { useAsync } from "@/app/useAsync";
 import { DIMENSION_LABELS, ErrorNote, Loading, PageTitle } from "@/app/ui";
 
-/** Chart colours come from the design tokens (src/tokens.css); SVG attributes cannot read var() themselves. */
 function useChartColours() {
   return useMemo(() => {
     const css = typeof window !== "undefined" ? getComputedStyle(document.documentElement) : null;
@@ -169,7 +166,6 @@ function DimensionChips({ value, onChange }: { value: DimensionKey; onChange: (d
   );
 }
 
-/** Score line with its low-high band. Each point: { x, score, band: [low, high] }. */
 function BandChart({ data, xLabel }: { data: { x: string | number; score: number; band: [number, number] }[]; xLabel?: string }) {
   const c = useChartColours();
   return (

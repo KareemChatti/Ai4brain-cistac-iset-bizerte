@@ -22,7 +22,6 @@ function write(key: string, value: string | null) {
     if (value === null) localStorage.removeItem(key);
     else localStorage.setItem(key, value);
   } catch {
-    /* private mode: keep it in memory only */
   }
 }
 
@@ -39,7 +38,6 @@ type AppState = {
 
 export const useApp = create<AppState>((set) => ({
   userId: read(KEYS.userId),
-  // One session per page load; rounds and mini-games in this visit share it.
   sessionId: crypto.randomUUID(),
   consentVersion: read(KEYS.consent),
   language: (read(KEYS.language) as Language | null) ?? "en",

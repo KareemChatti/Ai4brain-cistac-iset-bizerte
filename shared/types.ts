@@ -1,11 +1,8 @@
-// Shared contract in code. Source of truth: docs/contracts.md. Change both together.
-
 export type DimensionKey = "memory" | "attention" | "speed" | "reasoning" | "flexibility";
 export const DIMENSIONS: DimensionKey[] = ["memory", "attention", "speed", "reasoning", "flexibility"];
 
 export type MiniGameId = "card_recall" | "meld_spotter" | "quick_match" | "rami_puzzle" | "rule_switch";
 
-// ---------- events ----------
 export type EventSource = "rami" | "minigame" | "coach" | "app";
 
 export type Event = {
@@ -37,7 +34,6 @@ export type TurnPayload = {
   turns_to_out_best: number | null;
 };
 
-// ---------- backend responses ----------
 export type DimensionEstimate = { score: number; low: number; high: number; n_obs: number; trend: number };
 
 export type Profile = {
@@ -110,7 +106,6 @@ export type Review = {
   source: "llm" | "template";
 };
 
-// ---------- game <-> shell ----------
 export type Hint = {
   hint_id: string;
   action: "draw_stock" | "draw_discard" | "discard" | "lay_down";
@@ -122,14 +117,13 @@ export type Hint = {
 export type HintActions = {
   follow: () => void;
   ignore: () => void;
-  why: () => void;     // M3 calls /api/coach/explain-hint and logs hint_why
-  check: () => void;   // opens the card tracker, logs hint_checked
+  why: () => void;
+  check: () => void;
 };
 
 export type RoundSummary = { round_id: string; winner: "user" | "ai"; turns: number; user_penalty: number };
 export type MiniGameResult = { game: MiniGameId; level_end: number; accuracy: number; n_trials: number };
 
-// ---------- matches and the live session (contracts §5b) ----------
 export type MatchRound = { round_id: string; user_penalty: number; ai_penalty: number; winner: "user" | "ai" | null };
 export type MatchSummary = {
   match_id: string;

@@ -11,7 +11,6 @@ if str(BACKEND) not in sys.path:
 
 @pytest.fixture(autouse=True)
 def no_real_llm(monkeypatch):
-    """Tests never call the real API, and read the fixture evidence instead of the database."""
     monkeypatch.setenv("COACH_LLM_DISABLED", "1")
     from app.coach import cache, data
 

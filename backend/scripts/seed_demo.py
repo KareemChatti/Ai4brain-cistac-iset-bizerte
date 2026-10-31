@@ -1,10 +1,3 @@
-"""Load the simulated demo players into the database.
-
-    cd backend
-    python -m scripts.seed_demo            # adds them if they are missing
-    python -m scripts.seed_demo --reset    # deletes and rebuilds them (fresh dates)
-"""
-
 import argparse
 
 from app import db

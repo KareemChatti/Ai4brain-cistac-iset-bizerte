@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-/** A WebSocket stand-in that records what is sent and lets the test play the server. */
 class FakeSocket {
   static OPEN = 1;
   static instances: FakeSocket[] = [];
@@ -19,7 +18,6 @@ class FakeSocket {
     this.readyState = 3;
     this.onclose?.();
   }
-  // test helpers
   open() {
     this.readyState = 1;
     this.onopen?.();
@@ -110,7 +108,7 @@ describe("live session", () => {
     const body = JSON.parse(fetchMock.mock.calls[0][1].body);
     expect(body.events.map((x: { event_id: string }) => x.event_id)).toEqual([e.event_id]);
     vi.advanceTimersByTime(1000);
-    expect(FakeSocket.instances).toHaveLength(2); // reconnecting
+    expect(FakeSocket.instances).toHaveLength(2);
   });
 
   it("keeps the coach messages and the pushed profile", async () => {

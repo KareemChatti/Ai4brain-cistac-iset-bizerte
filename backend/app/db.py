@@ -1,10 +1,3 @@
-"""Database engine and sessions.
-
-Request handlers get a session through the `get_session` dependency. Plain functions
-that other modules call directly (for example the coach calling `build_evidence`)
-open their own with `session_scope()`.
-"""
-
 from collections.abc import Iterator
 from contextlib import contextmanager
 
@@ -19,10 +12,6 @@ _engine: Engine | None = None
 
 
 def configure(url: str | None = None) -> Engine:
-    """Create the engine for `url` (default from settings) and create missing tables.
-
-    Tests call `configure("sqlite://")` for a fresh in-memory database.
-    """
     global _engine
     url = url or settings.database_url
     kwargs: dict = {}
@@ -40,7 +29,7 @@ def configure(url: str | None = None) -> Engine:
             cursor.execute("PRAGMA foreign_keys=ON")
             cursor.close()
 
-    import app.models  # noqa: F401  (registers the tables on SQLModel.metadata)
+    import app.models  # noqa: F401
 
     SQLModel.metadata.create_all(engine)
     if _engine is not None:
@@ -54,7 +43,6 @@ def get_engine() -> Engine:
 
 
 def init_db() -> None:
-    """Create any tables registered after the engine was made (e.g. the coach's)."""
     SQLModel.metadata.create_all(get_engine())
 
 

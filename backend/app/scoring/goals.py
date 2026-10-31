@@ -1,5 +1,3 @@
-"""Goals: one target per dimension. Progress = (mu now - mu when set) / (target - mu when set), 0-1."""
-
 from sqlmodel import Session, select
 
 from app.models import Goal
@@ -29,7 +27,6 @@ def list_goals(session: Session, user_id: str) -> list[GoalOut]:
 
 
 def set_goal(session: Session, user_id: str, dimension: str, target: float) -> list[GoalOut]:
-    """Set (or replace) the goal for one dimension, remembering today's score as the baseline."""
     for old in session.exec(select(Goal).where(Goal.user_id == user_id, Goal.dimension == dimension)):
         session.delete(old)
     baseline = build_profile(session, user_id).dimensions[dimension].score
