@@ -8,6 +8,10 @@ from app.schemas import DIMENSIONS
 
 R_MINIGAME = 12.0
 R_ROUND = 25.0
+R_RUSHED = 60.0
+RUSH_MS = 1500
+RUSH_SHARE = 0.5
+RUSH_MIN_TURNS = 3
 QUICK_MATCH_SECONDS = 45
 
 MINIGAME_DIMENSION = {
@@ -171,11 +175,34 @@ def round_observations(events: Iterable[EventLike]) -> list[Observation]:
         "reasoning": _round_reasoning(events, turns),
         "flexibility": _round_flexibility(events),
     }
+    noise = R_RUSHED if round_is_rushed(events, turns) else R_ROUND
     return [
-        Observation(dimension, clamp(value), R_ROUND, end.ts, "round", end.round_id, end.session_id)
+        Observation(dimension, clamp(value), noise, end.ts, "round", end.round_id, end.session_id)
         for dimension, value in values.items()
         if value is not None
     ]
+
+
+def round_is_rushed(events: Sequence[EventLike], turns: list[dict]) -> bool:
+    times = [num(t, "think_ms") for t in turns]
+    times = [t for t in times if t is not None]
+    if len(times) < RUSH_MIN_TURNS:
+        return False
+    fast = sum(1 for t in times if t < RUSH_MS)
+    if fast / len(times) >= RUSH_SHARE:
+        return True
+    quality = {e.payload.get("turn_no"): num(e.payload, "quality") for e in events if e.type == "turn_graded"}
+    streak = 0
+    for t in turns:
+        q = quality.get(t.get("turn_no"))
+        think = num(t, "think_ms")
+        if think is not None and think < RUSH_MS and q is not None and q < 0.4:
+            streak += 1
+            if streak >= RUSH_MIN_TURNS:
+                return True
+        else:
+            streak = 0
+    return False
 
 
 def _round_memory(events: Sequence[EventLike], turns: list[dict]) -> float | None:

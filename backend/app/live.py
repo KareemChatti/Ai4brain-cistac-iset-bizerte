@@ -67,7 +67,7 @@ def live_messages(state: LiveState, events: list[EventIn], before: Profile | Non
             think = num(p, "think_ms")
             state.fast_streak = state.fast_streak + 1 if think is not None and think < FAST_MS else 0
             if state.fast_streak == FAST_STREAK:
-                out.append(_coach("pace", "Three quick discards in a row. A few seconds of thought often finds a better move.", e))
+                out.append(_coach("pace", "Three very quick discards in a row. Are you distracted or rushing? Rushed rounds count less in your Brain Twin, so take a breath and play your next move calmly.", e))
             if p.get("fed_opponent") is True:
                 out.append(_coach(
                     "fed_opponent",

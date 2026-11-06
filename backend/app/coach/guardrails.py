@@ -102,3 +102,13 @@ def check_review(raw: dict | Review, evidence: dict) -> tuple[Review | None, lis
         fatal = True
 
     return (None if fatal else review), problems
+
+
+FUTURE_RE = re.compile(r"\b(will|going to|next (week|month)|in \d+ (days|weeks|months)|by then)\b", re.IGNORECASE)
+NUMBER_RE = re.compile(r"\d")
+RANGE_RE = re.compile(r"\b(between|range|likely|probably|could|may|might|estimate|uncertain|not a prediction)\b|±|\d\s*[-–]\s*\d", re.IGNORECASE)
+
+
+def absolute_predictions(text: str) -> list[str]:
+    sentences = re.split(r"(?<=[.!?])\s+", text or "")
+    return [s for s in sentences if FUTURE_RE.search(s) and NUMBER_RE.search(s) and not RANGE_RE.search(s)]

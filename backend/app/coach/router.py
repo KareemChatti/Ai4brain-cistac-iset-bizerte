@@ -4,8 +4,8 @@ import time
 
 from fastapi import APIRouter, HTTPException
 
-from . import cache, data, prompts
-from .guardrails import check_review, find_blocked
+from . import cache, data, explain, prompts
+from .guardrails import absolute_predictions, check_review, find_blocked
 from .llm import DEFAULT_TIMEOUT_S, LLMUnavailable, complete_json
 from .schemas import (
     ChatAnswer,
@@ -122,12 +122,25 @@ def chat(body: ChatRequest) -> ChatResponse:
     if contains_personal_data(body.message):
         return ChatResponse(reply=PERSONAL_DATA_REPLY, fact_ids=[], contains_personal_data=True)
     profile = data.get_profile(body.user_id)
+    plan = data.get_plan(body.user_id)
+    if explain.is_why_question(body.message):
+        reply = explain.explain_plan(plan, profile)
+        if reply:
+            return ChatResponse(reply=reply, fact_ids=[])
+    projection = data.get_projection(body.user_id)
+    if explain.is_future_question(body.message):
+        return ChatResponse(reply=explain.explain_future(body.message, projection, profile), fact_ids=[])
     evidence = data.recent_evidence(body.user_id, n=3)
     known = {f["id"] for sheet in evidence for f in sheet.get("facts", [])}
     try:
-        answer = complete_json(prompts.chat_system(profile, evidence, body.language), body.message, ChatAnswer)
+        answer = complete_json(
+            prompts.chat_system(profile, evidence, body.language, plan=plan, projection=projection),
+            body.message, ChatAnswer,
+        )
         if find_blocked(answer.reply):
             raise LLMUnavailable("blocked words in chat reply")
+        if absolute_predictions(answer.reply):
+            raise LLMUnavailable("absolute prediction in chat reply")
         return ChatResponse(reply=answer.reply, fact_ids=[i for i in answer.fact_ids if i in known])
     except LLMUnavailable as e:
         log.info("chat fallback: %s", e)

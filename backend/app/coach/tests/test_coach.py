@@ -287,3 +287,59 @@ def test_a_stopped_ollama_is_remembered_briefly(monkeypatch):
         with pytest.raises(llm.LLMUnavailable, match="not running"):
             llm.complete_json("s", "u", ReviewDraft, timeout=5)
     assert len(calls) == 1
+
+
+PROFILE = json.loads((FIXTURES / "profile.json").read_text())
+PLAN = {"focus": "reasoning", "reason": "Reasoning has the lowest score.", "opponent_level": 3, "quick_mode": False, "steps": []}
+PROJECTION = {
+    "sessions_per_week": 3, "weeks": 4,
+    "disclaimer": "Estimate based on your own past progress. Not a prediction of ability.",
+    "points": [
+        {"week": 0, "dimension": "memory", "score": 60.0, "low": 50.0, "high": 70.0},
+        {"week": 4, "dimension": "memory", "score": 66.0, "low": 48.0, "high": 84.0},
+    ],
+}
+
+
+def _with_twin(monkeypatch):
+    from app.coach import data
+
+    monkeypatch.setattr(data, "get_profile", lambda user_id: PROFILE)
+    monkeypatch.setattr(data, "get_plan", lambda user_id: PLAN)
+    monkeypatch.setattr(data, "get_projection", lambda user_id, *a, **k: PROJECTION)
+
+
+def test_why_question_is_answered_from_brain_twin_data(client, monkeypatch):
+    _with_twin(monkeypatch)
+    r = client.post("/api/coach/chat", json={"user_id": USER, "message": "Why did you assign me this specific exercise today?"})
+    reply = r.json()["reply"]
+    e = PROFILE["dimensions"]["reasoning"]
+    assert "Reasoning" in reply
+    assert str(round(e["score"])) in reply
+    assert f"{round(e['low'])} to {round(e['high'])}" in reply
+
+
+def test_future_question_answers_with_a_range_never_one_number(client, monkeypatch):
+    _with_twin(monkeypatch)
+    r = client.post("/api/coach/chat", json={"user_id": USER, "message": "What exactly will my memory score be next month?"})
+    reply = r.json()["reply"]
+    assert "between 48 and 84" in reply
+    assert "not a prediction" in reply.lower()
+
+
+def test_guardrail_catches_absolute_predictions():
+    from app.coach.guardrails import absolute_predictions
+
+    assert absolute_predictions("Next month your memory will be 80.")
+    assert not absolute_predictions("Next month your memory will likely be between 70 and 85.")
+    assert not absolute_predictions("Your memory is 66 today.")
+
+
+def test_chat_rejects_llm_absolute_prediction(client, monkeypatch):
+    from app.coach import router
+    from app.coach.schemas import ChatAnswer
+
+    _with_twin(monkeypatch)
+    monkeypatch.setattr(router, "complete_json", lambda *a, **k: ChatAnswer(reply="You will reach 90 soon, I promise you will hit 90.", fact_ids=[]))
+    r = client.post("/api/coach/chat", json={"user_id": USER, "message": "How am I doing?"})
+    assert "90" not in r.json()["reply"]

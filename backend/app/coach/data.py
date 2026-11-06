@@ -62,3 +62,25 @@ def recent_evidence(user_id: str, n: int = 3) -> list[dict]:
         except LookupError:
             continue
     return sheets
+
+
+def get_plan(user_id: str) -> dict | None:
+    try:
+        from app.db import session_scope
+        from app.scoring.adaptive import next_plan
+
+        with session_scope() as session:
+            return _plain(next_plan(session, user_id))
+    except Exception:
+        return None
+
+
+def get_projection(user_id: str, sessions_per_week: int = 3, weeks: int = 4) -> dict | None:
+    try:
+        from app.db import session_scope
+        from app.scoring.projection import project
+
+        with session_scope() as session:
+            return _plain(project(session, user_id, sessions_per_week, weeks))
+    except Exception:
+        return None

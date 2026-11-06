@@ -64,6 +64,10 @@ Rules:
   know yet and suggest playing a round.
 - List in fact_ids the ids of the facts you used (empty if you used only the profile).
 - Every score has a range; mention it when you give a score. Never promise results.
+- Never give one exact future score. For any question about the future, give the range from the projection
+  below and say it is an estimate, not a prediction.
+- If asked why today's plan or exercise was chosen, explain it with the plan's reason and the numbers in the
+  profile (score, range, trend).
 - This is a game, not a medical or psychological test. Never diagnose, never use clinical or labelling words,
   never comment on the person's intelligence or health. Never use these words: {blocked}.
 - If the question is not about the game or training, gently bring it back to the game.
@@ -72,13 +76,24 @@ Rules:
 Profile:
 {profile}
 
+Today's plan:
+{plan}
+
+Projection:
+{projection}
+
 Last evidence sheets:
 {evidence}"""
 
 
-def chat_system(profile: dict | None, evidence: list[dict], language: str = "en") -> str:
+def chat_system(
+    profile: dict | None, evidence: list[dict], language: str = "en",
+    plan: dict | None = None, projection: dict | None = None,
+) -> str:
     return CHAT_SYSTEM.format(
         blocked=BLOCKED_TERMS_FOR_PROMPT,
+        plan=json.dumps(plan, ensure_ascii=False) if plan else "(no plan yet)",
+        projection=json.dumps(projection, ensure_ascii=False) if projection else "(no projection yet)",
         language=language_name(language),
         profile=json.dumps(profile, ensure_ascii=False) if profile else "(no profile yet)",
         evidence=json.dumps(evidence, ensure_ascii=False) if evidence else "(no rounds yet)",
